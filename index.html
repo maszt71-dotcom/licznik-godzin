@@ -33,7 +33,7 @@
                 <select id="workerSelect" onchange="changeWorker()"></select>
             </div>
             <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
-            <button class="btn btn-print" onclick="window.print()">🖨️ PDF</button>
+            <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
         </div>
         <div id="editSection">
             <div id="inputContainer"></div>
@@ -53,7 +53,7 @@
         <tbody id="tableBody"></tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM:</td>
+                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM W TYGODNIU:</td>
                 <td id="grandTotal">0.00</td>
             </tr>
         </tfoot>
@@ -122,7 +122,7 @@
         for(let i=0; i<10; i++) {
             const v = workers[i] || "";
             if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
-            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
+            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px; width:95%;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
         }
     }
 
