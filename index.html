@@ -5,96 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Godziny Pizza - Panel Sterowania</title>
     <style>
-        :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; --white: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; }
-        h1 { text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-size: 1.5rem; }
-
-        /* DASHBOARD */
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        :root { --primary: #e67e22; --primary-dark: #d35400; --bg: #f0f2f5; --text: #1a1a1b; --white: #ffffff; --shadow: 0 4px 6px rgba(0,0,0,0.07); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; line-height: 1.6; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { margin: 0; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; font-size: 2rem; }
+        
+        /* NOWE MENU GŁÓWNE / DASHBOARD */
+        .main-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        
         .worker-card { 
-            background: var(--white); padding: 15px; border-radius: 12px; text-align: center; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; border: 2px solid transparent;
+            background: var(--white); padding: 20px; border-radius: 16px; text-align: center; 
+            box-shadow: var(--shadow); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
-        .worker-card:hover { border-color: var(--primary); }
-        .worker-card.active { border-color: var(--primary); background: #fffcf9; }
-        .card-name { display: block; font-weight: bold; font-size: 0.9rem; color: var(--primary); }
-        .card-hours { font-size: 1.4rem; font-weight: 900; color: var(--text); }
+        .worker-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .worker-card.active { border-color: var(--primary); background: #fffcf4; box-shadow: 0 0 15px rgba(230,126,34,0.2); }
+        .worker-card i { font-size: 2rem; color: #ccc; }
+        .card-name { font-weight: 700; font-size: 1rem; color: var(--text); }
+        .card-hours { font-size: 1.6rem; font-weight: 900; color: var(--primary); }
 
         /* TABELA EDYCJI */
         #detailsWrapper { 
-            display: none; background: var(--white); padding: 15px; border-radius: 12px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 30px;
+            display: none; background: var(--white); padding: 25px; border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); margin-bottom: 40px; border: 1px solid #eee;
         }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th { background: #eee; padding: 8px; font-size: 0.75rem; border: 1px solid #ddd; }
-        td { border: 1px solid #ddd; padding: 5px; text-align: center; font-size: 0.85rem; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f8f9fa; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background: #f8f9fa; color: #666; padding: 12px; text-transform: uppercase; font-size: 0.75rem; font-weight: 800; border: 1px solid #eee; }
+        td { border: 1px solid #eee; padding: 8px; text-align: center; font-size: 0.9rem; }
         .total-row { background: var(--text); color: white; font-weight: bold; }
         
-        select, .date-input { padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.8rem; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; margin: 5px; }
-        .btn-report { background: #8e44ad; color: white; width: calc(100% - 10px); }
-        .btn-print-final { background: #27ae60; color: white; }
-        .btn-close { background: #95a5a6; color: white; }
-        .btn-wolne { background: #f8f9fa; border: 1px solid #ddd; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+        /* PRZYCISKI */
+        .btn { padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .btn-report { background: #8e44ad; color: white; }
+        .btn-report:hover { background: #732d91; }
+        .btn-settings { background: #3498db; color: white; }
+        .btn-print-final { background: #27ae60; color: white; width: 100%; justify-content: center; }
+        .btn-close { background: #e74c3c; color: white; width: 100%; justify-content: center; }
+        .btn-wolne { background: #fdf2e9; border: 1px solid #fad7a0; color: #d35400; padding: 4px 8px; border-radius: 6px; font-size: 11px; }
         
-        /* RAPORT A4 */
-        #reportWrapper { display: none; background: white; padding: 10px; border-radius: 12px; margin-top: 15px; }
-        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .report-item { border: 1px solid #000; padding: 6px; margin-bottom: 5px; }
-        
-        .report-worker-header { 
-            display: flex; justify-content: space-between; align-items: flex-end; 
-            border-bottom: 1px solid #000; margin-bottom: 4px; padding-bottom: 2px;
-        }
-        .report-worker-header h3 { margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: #000; }
-        .report-summary-text { font-size: 11px; font-weight: bold; }
-        .highlight-hours { color: var(--primary); font-size: 13px; font-weight: 900; }
-
-        .report-table { font-size: 8px !important; width: 100%; border-collapse: collapse; }
-        .report-table th, .report-table td { border: 1px solid #000; padding: 1px 2px; text-align: center; }
+        /* RAPORT */
+        #reportWrapper { display: none; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .report-item { border: 1px solid #e1e4e8; padding: 10px; border-radius: 10px; }
+        .report-worker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 6px; padding-bottom: 4px; }
+        .report-worker-header h3 { margin: 0; font-size: 1rem; color: #333; }
+        .highlight-hours { color: var(--primary); font-size: 1.1rem; font-weight: 900; }
+        .report-table { font-size: 9px; width: 100%; border-collapse: collapse; }
+        .report-table th, .report-table td { border: 1px solid #eee; padding: 2px; text-align: center; }
 
         /* LISTA EDYCJI */
-        .admin-tools { text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; }
-        .worker-edit-row { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
-        .btn-del { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .worker-edit-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .btn-del { background: #ff7675; color: white; border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         @media print {
-            @page { size: A4; margin: 0.3cm; }
+            @page { size: A4; margin: 0.5cm; }
             .no-print { display: none !important; }
-            #reportWrapper { display: block !important; width: 100%; border:none; padding:0; }
-            body { background: white; padding: 0; }
-            .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            #reportWrapper { display: block !important; width: 100%; border:none; padding:0; box-shadow: none; }
+            .report-grid { grid-template-columns: 1fr 1fr; }
             .report-item { page-break-inside: avoid; border: 1px solid #000 !important; }
-            .highlight-hours { color: #d35400 !important; } 
+            .highlight-hours { color: #d35400 !important; }
         }
+        @media (max-width: 600px) { .report-grid { grid-template-columns: 1fr; } .main-nav { flex-direction: column; } }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 class="no-print">🍕 Godziny Pizza</h1>
+    <header class="no-print">
+        <h1>🍕 Godziny Pizza</h1>
+    </header>
 
-    <div class="no-print" style="text-align:center;">
-        <button class="btn btn-report" onclick="toggleReport()">📄 RAPORT</button>
+    <div class="main-nav no-print">
+        <button class="btn btn-report" onclick="toggleReport()">📄 GENERUJ RAPORT</button>
+        <button class="btn btn-settings" onclick="toggleEdit()">⚙️ LISTA OSÓB</button>
     </div>
 
     <div id="workerDashboard" class="dashboard no-print"></div>
 
     <div id="reportWrapper">
-        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #eee; padding: 10px; border-radius: 8px;">
-            <h2 style="margin:0; font-size:1rem;">Podgląd A4</h2>
-            <div>
+        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
+            <h2 style="margin:0; font-size:1.1rem;">Podgląd Raportu A4</h2>
+            <div style="display:flex; gap:10px;">
                 <button class="btn btn-print-final" onclick="window.print()">🖨️ DRUKUJ</button>
-                <button class="btn btn-close" onclick="toggleReport()">✕</button>
+                <button class="btn" style="background:#666; color:white;" onclick="toggleReport()">✕</button>
             </div>
         </div>
-        <div id="reportHeader" style="text-align:center; font-weight:bold; margin-bottom:10px; font-size:11px; text-transform: uppercase;"></div>
+        <div id="reportHeader" style="text-align:center; font-weight:bold; margin-bottom:15px; font-size:12px; text-transform: uppercase;"></div>
         <div id="reportContent" class="report-grid"></div>
     </div>
 
     <div id="detailsWrapper">
-        <h2 id="currentWorkerName" style="margin:0 0 10px 0; color:var(--primary); font-size:1.1rem;">Pracownik</h2>
+        <div class="table-header">
+            <h2 id="currentWorkerName" style="margin:0; color:var(--primary);">Pracownik</h2>
+            <input type="date" id="mondayDate" class="date-input" onchange="updateTableDates(); updateReport();">
+        </div>
         <table>
             <thead><tr><th>Dzień</th><th>Data</th><th>Od — Do</th><th>Suma</th></tr></thead>
             <tbody id="tableBody"></tbody>
@@ -102,16 +111,15 @@
                 <tr class="total-row"><td colspan="3" style="text-align:right">SUMA:</td><td id="grandTotal">0.00</td></tr>
             </tfoot>
         </table>
-        <button class="btn btn-close no-print" style="width:100%" onclick="toggleWorker('')">✕ ZAMKNIJ EDYCJĘ</button>
+        <button class="btn btn-close no-print" onclick="toggleWorker('')">✕ ZAMKNIJ EDYCJĘ</button>
     </div>
 
     <div class="admin-tools no-print">
-        <button class="btn" style="background:#3498db; color:white;" onclick="toggleEdit()">⚙️ Lista Pracowników</button>
-        <div id="editSection" style="display:none; margin-top:15px; background:white; padding:15px; border-radius:8px; border:1px solid #ddd;">
-            <div id="inputList"></div>
-            <button class="btn" style="background:#2ecc71; color:white; width:100%;" onclick="addNewWorkerField()">+ Dodaj Miejsce</button>
-            <button class="btn" style="background:var(--primary); color:white; width:100%; margin-top:10px;" onclick="saveWorkers()">ZAPISZ ZMIANY</button>
-            <button class="btn btn-close" style="background:#666; width:100%; margin-top:5px;" onclick="toggleEdit()">ZAMKNIJ</button>
+        <div id="editSection" style="display:none; background:white; padding:25px; border-radius:20px; box-shadow: var(--shadow); border: 1px solid #eee;">
+            <h3 style="margin-top:0;">Zarządzaj Pracownikami</h3>
+            <div id="inputList" style="margin-bottom:20px;"></div>
+            <button class="btn" style="background:#2ecc71; color:white; width:100%;" onclick="addNewWorkerField()">+ DODAJ NOWEGO</button>
+            <button class="btn" style="background:var(--primary); color:white; width:100%; margin-top:10px;" onclick="saveWorkers()">💾 ZAPISZ ZMIANY</button>
         </div>
     </div>
 </div>
@@ -134,18 +142,18 @@
     }
 
     function init() {
+        const now = new Date();
+        const mon = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
+        document.getElementById('mondayDate').value = mon.toISOString().split('T')[0];
+        
         renderDashboard();
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         const tOpts = getTimeOptions();
-        const now = new Date();
-        const mon = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
 
         daysArr.forEach((d, i) => {
-            let dateCell = (i === 0) 
-                ? `<input type="date" id="mondayDate" class="date-input" value="${mon.toISOString().split('T')[0]}" onchange="updateTableDates(); updateReport();">`
-                : `<span id="date-${i}"></span>`;
-            tbody.innerHTML += `<tr><td><strong>${d}</strong></td><td>${dateCell}</td><td>
+            let dateCell = (i === 0) ? `Poniedziałek` : `<span id="date-${i}"></span>`;
+            tbody.innerHTML += `<tr><td><strong>${d}</strong></td><td id="date-label-${i}">-</td><td>
                 <select id="s${i}" onchange="saveData(${i})">${tOpts}</select>
                 <select id="e${i}" onchange="saveData(${i})">${tOpts}</select>
                 <button class="btn-wolne no-print" onclick="setWolne(${i})">W</button>
@@ -162,19 +170,23 @@
             const card = document.createElement('div');
             card.className = `worker-card ${activeWorker === w ? 'active' : ''}`;
             card.onclick = () => toggleWorker(w);
-            card.innerHTML = `<span class="card-name">${w}</span><span class="card-hours">${sum}h</span>`;
+            card.innerHTML = `
+                <div style="font-size:1.5rem">👤</div>
+                <span class="card-name">${w}</span>
+                <span class="card-hours">${sum}h</span>
+            `;
             dash.appendChild(card);
         });
     }
 
     function toggleWorker(name) {
         document.getElementById('reportWrapper').style.display = "none";
+        document.getElementById('editSection').style.display = "none";
         if (activeWorker === name || name === "") {
             activeWorker = ""; document.getElementById('detailsWrapper').style.display = "none";
         } else {
             activeWorker = name; loadWorkerData(name);
             document.getElementById('detailsWrapper').style.display = "block";
-            window.scrollTo({ top: document.getElementById('detailsWrapper').offsetTop - 20, behavior: 'smooth' });
         }
         renderDashboard();
     }
@@ -215,27 +227,21 @@
     function toggleReport() {
         const rw = document.getElementById('reportWrapper');
         activeWorker = ""; document.getElementById('detailsWrapper').style.display = "none";
+        document.getElementById('editSection').style.display = "none";
         renderDashboard();
         if(rw.style.display === "block") rw.style.display = "none";
-        else { updateReport(); rw.style.display = "block"; window.scrollTo({ top: rw.offsetTop - 20, behavior: 'smooth' }); }
+        else { updateReport(); rw.style.display = "block"; }
     }
 
     function updateReport() {
         const content = document.getElementById('reportContent');
         const header = document.getElementById('reportHeader');
         const mon = new Date(document.getElementById('mondayDate').value);
-        header.innerText = `RAPORT: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}`;
+        header.innerText = `OKRES: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}`;
         content.innerHTML = "";
         workers.forEach(w => {
             const data = allHoursData[w]; if(!data) return;
-            let htm = `
-                <div class="report-item">
-                    <div class="report-worker-header">
-                        <h3>${w}</h3>
-                        <div class="report-summary-text">Suma godzin: <span class="highlight-hours">${data.total}h</span></div>
-                    </div>
-                    <table class="report-table">
-                        <tr>`;
+            let htm = `<div class="report-item"><div class="report-worker-header"><h3>${w}</h3><div class="highlight-hours">${data.total}h</div></div><table class="report-table"><tr>`;
             daysArr.forEach(dn => htm += `<th>${dn}</th>`);
             htm += `</tr><tr>`;
             data.days.forEach(d => htm += `<td>${d.r > 0 ? d.r : '-'}</td>`);
@@ -245,18 +251,22 @@
     }
 
     function setWolne(i) { document.getElementById(`s${i}`).value = "00:00"; document.getElementById(`e${i}`).value = "00:00"; saveData(i); }
+    
     function updateTableDates() {
         const monVal = document.getElementById('mondayDate').value;
         if(!monVal) return;
         const mon = new Date(monVal);
-        daysArr.forEach((_, i) => { if (i > 0) {
+        daysArr.forEach((_, i) => {
             const cur = new Date(mon); cur.setDate(mon.getDate() + i);
-            document.getElementById(`date-${i}`).innerText = cur.toLocaleDateString().slice(0,5);
-        }});
+            const target = document.getElementById(`date-label-${i}`);
+            if(target) target.innerText = cur.toLocaleDateString().slice(0,5);
+        });
     }
 
     function toggleEdit() { 
         const s = document.getElementById('editSection'); 
+        document.getElementById('detailsWrapper').style.display = "none";
+        document.getElementById('reportWrapper').style.display = "none";
         if(s.style.display === 'block') s.style.display = 'none';
         else { renderEditList(); s.style.display = 'block'; }
     }
@@ -266,8 +276,8 @@
         list.innerHTML = "";
         workers.forEach((w, index) => {
             list.innerHTML += `<div class="worker-edit-row">
-                <input type="text" class="worker-input" value="${w}" style="flex:1; padding:8px;">
-                <button class="btn-del" onclick="removeWorker(${index})">X</button>
+                <input type="text" class="worker-input" value="${w}" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
+                <button class="btn-del" onclick="removeWorker(${index})">USUŃ</button>
             </div>`;
         });
         if(workers.length === 0) addNewWorkerField();
@@ -275,10 +285,11 @@
 
     function addNewWorkerField() {
         const list = document.getElementById('inputList');
-        list.innerHTML += `<div class="worker-edit-row">
-            <input type="text" class="worker-input" value="" placeholder="Imię" style="flex:1; padding:8px;">
-            <button class="btn-del" onclick="this.parentElement.remove()">X</button>
-        </div>`;
+        const div = document.createElement('div');
+        div.className = "worker-edit-row";
+        div.innerHTML = `<input type="text" class="worker-input" value="" placeholder="Imię" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
+                         <button class="btn-del" onclick="this.parentElement.remove()">USUŃ</button>`;
+        list.appendChild(div);
     }
 
     function removeWorker(index) {
