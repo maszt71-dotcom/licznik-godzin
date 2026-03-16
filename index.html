@@ -42,21 +42,21 @@
         
         /* RAPORT PODGLĄD - OPTYMALIZACJA A4 */
         #reportWrapper { display: none; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
-        .report-item { margin-bottom: 20px; border-bottom: 1px solid #000; padding-bottom: 10px; }
-        .report-item h3 { margin: 2px 0; font-size: 0.9rem; color: #000; text-transform: uppercase; }
-        .report-table { font-size: 10px !important; width: 100% !important; border: 1px solid #000 !important; }
-        .report-table th, .report-table td { padding: 2px 4px !important; border: 1px solid #000 !important; }
+        .report-item { margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+        .report-item h3 { margin: 2px 0; font-size: 0.85rem; color: #000; text-transform: uppercase; }
+        .report-table { font-size: 9px !important; width: 100% !important; border: 1px solid #000 !important; margin-bottom: 5px !important; }
+        .report-table th, .report-table td { padding: 1px 3px !important; border: 1px solid #000 !important; }
 
         .admin-tools { text-align: center; margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; }
         #editSection { display: none; margin-top: 20px; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
 
         @media print {
-            @page { size: A4; margin: 1cm; }
+            @page { size: A4; margin: 0.5cm; }
             .no-print { display: none !important; }
             #reportWrapper { display: block !important; box-shadow: none; padding: 0; width: 100%; border:none; }
             body { background: white; padding: 0; }
-            .report-item { page-break-inside: avoid; margin-bottom: 15px; }
-            h2 { font-size: 1rem; margin-bottom: 10px; }
+            .report-item { page-break-inside: avoid; margin-bottom: 10px; }
+            h2 { font-size: 0.9rem; margin-bottom: 5px; }
         }
     </style>
 </head>
@@ -142,7 +142,7 @@
                 : `<span id="date-${i}"></span>`;
             tbody.innerHTML += `<tr><td><strong>${d}</strong></td><td>${dateCell}</td><td>
                 <select id="s${i}" onchange="saveData(${i})">${tOpts}</select>
-                <select id="e${i}" onchange="saveData(${i})">${tOpts}</select>
+                <select id="e${i}" onchange="calcSum(${i}); saveData(${i})">${tOpts}</select>
                 <button class="btn-wolne no-print" onclick="setWolne(${i})">W</button>
                 </td><td id="r${i}" style="font-weight:bold;">0.00</td></tr>`;
         });
@@ -187,17 +187,19 @@
         document.getElementById('grandTotal').innerText = allHoursData[name]?.total || "0.00";
     }
 
-    function saveData(i) {
+    function calcSum(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
         const out = document.getElementById(`r${i}`);
-        let diff = 0;
         if(s && e) {
             let sP = s.split(':'), eP = e.split(':');
-            diff = (parseInt(eP[0]) + parseInt(eP[1])/60) - (parseInt(sP[0]) + parseInt(sP[1])/60);
-            if (diff < 0) diff += 24;
-            out.innerText = (s === e && s === "00:00") ? "0.00" : diff.toFixed(2);
+            let d = (parseInt(eP[0]) + parseInt(eP[1])/60) - (parseInt(sP[0]) + parseInt(sP[1])/60);
+            if (d < 0) d += 24;
+            out.innerText = (s === e && s === "00:00") ? "0.00" : d.toFixed(2);
         } else { out.innerText = "0.00"; }
+    }
 
+    function saveData(i) {
+        calcSum(i);
         let total = 0, days = [];
         for(let j=0; j<7; j++) {
             total += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
@@ -235,7 +237,9 @@
 
     function setWolne(i) { document.getElementById(`s${i}`).value = "00:00"; document.getElementById(`e${i}`).value = "00:00"; saveData(i); }
     function updateTableDates() {
-        const mon = new Date(document.getElementById('mondayDate').value);
+        const monVal = document.getElementById('mondayDate').value;
+        if(!monVal) return;
+        const mon = new Date(monVal);
         daysArr.forEach((_, i) => { if (i > 0) {
             const cur = new Date(mon); cur.setDate(mon.getDate() + i);
             document.getElementById(`date-${i}`).innerText = cur.toLocaleDateString();
