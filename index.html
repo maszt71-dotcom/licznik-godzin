@@ -13,16 +13,15 @@
         select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: var(--primary); color: white; padding: 12px; }
-        td { border: 1px solid #eee; padding: 10px; text-align: center; position: relative; }
+        td { border: 1px solid #eee; padding: 10px; text-align: center; }
         .total-row { background: #2c3e50; color: white; font-weight: bold; }
         .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
-        .btn-fast { background: #eee; border: 1px solid #bbb; padding: 5px 8px; font-size: 12px; border-radius: 4px; margin-left: 5px; cursor: pointer; }
-        .fast-menu { display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; width: 80px; }
-        .fast-opt { display: block; width: 100%; text-align: left; padding: 10px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: bold; color: #c0392b; }
-        .fast-opt:hover { background: #f0f0f0; }
-        @media print { .no-print, .btn-fast, .fast-menu { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
+        .btn-wolne { background: #fdf2f2; border: 1px solid #f5c6cb; color: #721c24; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-left: 8px; cursor: pointer; font-weight: bold; }
+        .btn-wolne:hover { background: #f8d7da; }
+        #editSection { display: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+        @media print { .no-print, .btn-wolne { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
     </style>
 </head>
 <body>
@@ -37,7 +36,7 @@
             <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
             <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
         </div>
-        <div id="editSection" style="display:none; margin-top:15px; border-top:1px solid #ddd; padding-top:10px;">
+        <div id="editSection">
             <div id="inputContainer"></div>
             <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ</button>
         </div>
@@ -67,7 +66,7 @@
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
 
     function getTimeOptions() {
-        let htm = ''; // Usunięto "--:--" dla czystego wyglądu zer
+        let htm = '';
         for(let h=0; h<24; h++) {
             for(let m=0; m<60; m+=30) {
                 let hh = h<10?'0'+h:h, mm = m===0?'00':m;
@@ -95,8 +94,7 @@
                     <td>
                         <select id="s${i}" onchange="calc(${i})">${tOpts}</select>
                         <select id="e${i}" onchange="calc(${i})">${tOpts}</select>
-                        <button class="btn-fast no-print" onclick="toggleFast(${i})">⚡</button>
-                        <div id="f${i}" class="fast-menu"></div>
+                        <button class="btn-wolne no-print" onclick="setWolne(${i})">Wolne</button>
                     </td>
                     <td id="r${i}" style="font-weight:bold; color:var(--primary)">0.00</td>
                 </tr>`;
@@ -107,22 +105,12 @@
     function changeWorker() {
         const val = document.getElementById('workerSelect').value;
         document.getElementById('displayWorker').innerText = val || "Godziny Pizza";
-        for(let i=0; i<7; i++) {
-            setT(i, '00:00', '00:00'); // Ustawia zera przy zmianie osoby
-        }
+        for(let i=0; i<7; i++) { setWolne(i); }
     }
 
-    function toggleFast(i) {
-        const m = document.getElementById(`f${i}`);
-        if(m.style.display === "block") { m.style.display="none"; return; }
-        m.innerHTML = `<button class="fast-opt" onclick="setT(${i},'00:00','00:00')">Wolne</button>`;
-        m.style.display = "block";
-    }
-
-    function setT(i, s, e) {
-        document.getElementById(`s${i}`).value = s;
-        document.getElementById(`e${i}`).value = e;
-        document.getElementById(`f${i}`).style.display = "none";
+    function setWolne(i) {
+        document.getElementById(`s${i}`).value = "00:00";
+        document.getElementById(`e${i}`).value = "00:00";
         calc(i);
     }
 
@@ -132,7 +120,7 @@
         for(let i=0; i<10; i++) {
             const v = workers[i] || "";
             if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
-            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Imię pracownika ${i+1}">`;
+            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
         }
     }
 
@@ -147,18 +135,11 @@
     function calc(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
         const out = document.getElementById(`r${i}`);
-        
-        let startParts = s.split(':');
-        let endParts = e.split(':');
+        let startParts = s.split(':'), endParts = e.split(':');
         let d = (parseInt(endParts[0]) + parseInt(endParts[1])/60) - (parseInt(startParts[0]) + parseInt(startParts[1])/60);
-        
         if (d < 0) d += 24;
-        
-        // Jeśli godziny są takie same (np. 00:00 i 00:00), suma ma być 0.00
         out.innerText = (s === e) ? "0.00" : d.toFixed(2);
-        
-        let t = 0; 
-        for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
+        let t = 0; for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
         document.getElementById('grandTotal').innerText = t.toFixed(2);
     }
     init();
