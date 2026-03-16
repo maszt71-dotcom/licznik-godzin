@@ -35,23 +35,27 @@
         
         select, .date-input { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; }
         .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px; }
-        .btn-print { background: #27ae60; color: white; width: calc(100% - 10px); font-size: 1.1rem; }
         .btn-report { background: #8e44ad; color: white; width: calc(100% - 10px); font-size: 1.1rem; }
+        .btn-print-final { background: #27ae60; color: white; }
         .btn-close { background: #95a5a6; color: white; width: calc(100% - 10px); }
         .btn-wolne { background: #f8f9fa; border: 1px solid #ddd; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         
-        /* RAPORT PODGLĄD */
-        #reportWrapper { display: none; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
-        .report-item { margin-bottom: 50px; border-bottom: 2px dashed #eee; padding-bottom: 20px; }
+        /* RAPORT PODGLĄD - OPTYMALIZACJA A4 */
+        #reportWrapper { display: none; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .report-item { margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .report-item h3 { margin: 5px 0; font-size: 1rem; color: var(--primary); }
+        .report-table { font-size: 11px !important; margin-bottom: 5px !important; }
+        .report-table th, .report-table td { padding: 4px !important; }
 
         .admin-tools { text-align: center; margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; }
         #editSection { display: none; margin-top: 20px; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
 
         @media print {
             .no-print { display: none !important; }
-            #reportWrapper { display: block !important; box-shadow: none; padding: 0; }
+            #reportWrapper { display: block !important; box-shadow: none; padding: 0; width: 100%; }
             body { background: white; padding: 0; }
-            .report-item { page-break-after: always; border: none; }
+            .report-item { page-break-inside: avoid; border-bottom: 1px solid #ccc; }
+            h2 { font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -60,17 +64,19 @@
 <div class="container">
     <h1 class="no-print">🍕 Panel Godziny Pizza</h1>
 
-    <div class="no-print" style="text-align:center;">
-        <button class="btn btn-print" onclick="window.print()">🖨️ DRUKUJ OD RAZU (PDF)</button>
-        <button class="btn btn-report" onclick="toggleReport()">📄 POKAŻ RAPORT ZBIORCZY</button>
+    <div class="no-print" style="text-align:center; margin-bottom: 20px;">
+        <button class="btn btn-report" onclick="toggleReport()">📄 POKAŻ I DRUKUJ RAPORT ZBIORCZY</button>
     </div>
 
     <div id="workerDashboard" class="dashboard no-print"></div>
 
     <div id="reportWrapper">
-        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <h2 style="color: #8e44ad; margin:0;">Raport Zbiorczy</h2>
-            <button class="btn btn-close" style="width:auto;" onclick="toggleReport()">✕ ZAMKNIJ RAPORT</button>
+        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 10px;">
+            <h2 style="color: #8e44ad; margin:0;">Podgląd Wydruku A4</h2>
+            <div>
+                <button class="btn btn-print-final" onclick="window.print()">🖨️ DRUKUJ TEN RAPORT</button>
+                <button class="btn btn-close" style="width:auto; background: #666;" onclick="toggleReport()">✕ ZAMKNIJ</button>
+            </div>
         </div>
         <div id="reportContent"></div>
     </div>
@@ -205,33 +211,23 @@
     function toggleReport() {
         const rw = document.getElementById('reportWrapper');
         const dw = document.getElementById('detailsWrapper');
-        activeWorker = "";
-        dw.style.display = "none";
-        renderDashboard();
-        
-        if(rw.style.display === "block") {
-            rw.style.display = "none";
-        } else {
-            updateReport();
-            rw.style.display = "block";
-            window.scrollTo({ top: rw.offsetTop - 20, behavior: 'smooth' });
-        }
+        activeWorker = ""; dw.style.display = "none"; renderDashboard();
+        if(rw.style.display === "block") { rw.style.display = "none"; } 
+        else { updateReport(); rw.style.display = "block"; window.scrollTo({ top: rw.offsetTop - 20, behavior: 'smooth' }); }
     }
 
     function updateReport() {
         const content = document.getElementById('reportContent');
         const mon = new Date(document.getElementById('mondayDate').value);
-        content.innerHTML = `<h2 style="text-align:center; border-bottom: 2px solid #333; padding-bottom:10px;">RAPORT ZBIORCZY: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}</h2>`;
-
+        content.innerHTML = `<h2 style="text-align:center; margin-bottom:15px;">RAPORT GODZIN: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}</h2>`;
         workers.forEach(w => {
-            const data = allHoursData[w];
-            if(!data) return;
-            let htm = `<div class="report-item"><h3>Pracownik: ${w}</h3><table style="font-size:13px;"><thead><tr><th>Dzień</th><th>Data</th><th>Od</th><th>Do</th><th>Suma</th></tr></thead><tbody>`;
+            const data = allHoursData[w]; if(!data) return;
+            let htm = `<div class="report-item"><h3>${w}</h3><table class="report-table"><thead><tr><th>Dzień</th><th>Data</th><th>Od</th><th>Do</th><th>Suma</th></tr></thead><tbody>`;
             daysArr.forEach((dn, i) => {
                 const cur = new Date(mon); cur.setDate(mon.getDate() + i);
                 htm += `<tr><td>${dn}</td><td>${cur.toLocaleDateString()}</td><td>${data.days[i].s || '--'}</td><td>${data.days[i].e || '--'}</td><td>${data.days[i].r}h</td></tr>`;
             });
-            htm += `</tbody><tfoot><tr style="font-weight:bold; background:#f9f9f9;"><td colspan="4" style="text-align:right">SUMA:</td><td>${data.total}h</td></tr></tfoot></table></div>`;
+            htm += `</tbody><tfoot><tr style="font-weight:bold; background:#f9f9f9;"><td colspan="4" style="text-align:right">ŁĄCZNIE:</td><td>${data.total}h</td></tr></tfoot></table></div>`;
             content.innerHTML += htm;
         });
     }
