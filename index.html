@@ -3,74 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godziny Pizza - Panel Sterowania</title>
+    <title>Godziny Pizza - Panel</title>
     <style>
-        :root { --primary: #e67e22; --primary-dark: #d35400; --bg: #f0f2f5; --text: #1a1a1b; --white: #ffffff; --shadow: 0 4px 6px rgba(0,0,0,0.07); }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; line-height: 1.6; }
-        .container { max-width: 1000px; margin: 0 auto; }
+        :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; }
         
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { margin: 0; color: var(--primary); text-transform: uppercase; letter-spacing: 2px; font-size: 2rem; }
-        
-        /* NOWE MENU GŁÓWNE / DASHBOARD */
-        .main-nav { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        
+        /* NAGŁÓWEK I MENU */
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { margin: 0; color: var(--primary); text-transform: uppercase; font-size: 1.8rem; }
+        .main-buttons { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
+
+        /* DASHBOARD - KAFELKI */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .worker-card { 
-            background: var(--white); padding: 20px; border-radius: 16px; text-align: center; 
-            box-shadow: var(--shadow); cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid transparent;
-            display: flex; flex-direction: column; align-items: center; gap: 8px;
+            background: var(--white); padding: 20px; border-radius: 15px; text-align: center; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; border: 2px solid transparent;
         }
-        .worker-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); border-color: var(--primary); }
-        .worker-card.active { border-color: var(--primary); background: #fffcf4; box-shadow: 0 0 15px rgba(230,126,34,0.2); }
-        .worker-card i { font-size: 2rem; color: #ccc; }
-        .card-name { font-weight: 700; font-size: 1rem; color: var(--text); }
-        .card-hours { font-size: 1.6rem; font-weight: 900; color: var(--primary); }
+        .worker-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .worker-card.active { border-color: var(--primary); background: #fffcf4; }
+        .card-name { display: block; font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: var(--text); }
+        .card-hours { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
 
         /* TABELA EDYCJI */
         #detailsWrapper { 
-            display: none; background: var(--white); padding: 25px; border-radius: 20px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); margin-bottom: 40px; border: 1px solid #eee;
+            display: none; background: var(--white); padding: 20px; border-radius: 15px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 30px;
         }
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #f8f9fa; }
-        
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background: #f8f9fa; color: #666; padding: 12px; text-transform: uppercase; font-size: 0.75rem; font-weight: 800; border: 1px solid #eee; }
-        td { border: 1px solid #eee; padding: 8px; text-align: center; font-size: 0.9rem; }
-        .total-row { background: var(--text); color: white; font-weight: bold; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th { background: #f8f9fa; padding: 10px; font-size: 0.8rem; border: 1px solid #eee; }
+        td { border: 1px solid #eee; padding: 8px; text-align: center; }
         
         /* PRZYCISKI */
-        .btn { padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         .btn-report { background: #8e44ad; color: white; }
-        .btn-report:hover { background: #732d91; }
         .btn-settings { background: #3498db; color: white; }
-        .btn-print-final { background: #27ae60; color: white; width: 100%; justify-content: center; }
-        .btn-close { background: #e74c3c; color: white; width: 100%; justify-content: center; }
-        .btn-wolne { background: #fdf2e9; border: 1px solid #fad7a0; color: #d35400; padding: 4px 8px; border-radius: 6px; font-size: 11px; }
-        
-        /* RAPORT */
-        #reportWrapper { display: none; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
-        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .report-item { border: 1px solid #e1e4e8; padding: 10px; border-radius: 10px; }
-        .report-worker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 6px; padding-bottom: 4px; }
-        .report-worker-header h3 { margin: 0; font-size: 1rem; color: #333; }
+        .btn-save { background: #27ae60; color: white; width: 100%; }
+        .btn-close { background: #95a5a6; color: white; width: 100%; margin-top: 10px; }
+        .btn-wolne { background: #f8f9fa; border: 1px solid #ddd; padding: 3px 7px; border-radius: 4px; font-size: 10px; }
+
+        /* RAPORT A4 */
+        #reportWrapper { display: none; background: white; padding: 15px; border-radius: 15px; margin-top: 20px; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .report-item { border: 1px solid #000; padding: 8px; margin-bottom: 5px; }
+        .report-worker-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #000; margin-bottom: 5px; }
+        .report-worker-header h3 { margin: 0; font-size: 0.9rem; font-weight: bold; }
         .highlight-hours { color: var(--primary); font-size: 1.1rem; font-weight: 900; }
         .report-table { font-size: 9px; width: 100%; border-collapse: collapse; }
-        .report-table th, .report-table td { border: 1px solid #eee; padding: 2px; text-align: center; }
+        .report-table th, .report-table td { border: 1px solid #000; padding: 2px; text-align: center; }
 
         /* LISTA EDYCJI */
-        .worker-edit-row { display: flex; gap: 8px; margin-bottom: 8px; }
-        .btn-del { background: #ff7675; color: white; border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .worker-edit-row { display: flex; gap: 5px; margin-bottom: 8px; }
+        .btn-del { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; }
 
         @media print {
-            @page { size: A4; margin: 0.5cm; }
             .no-print { display: none !important; }
-            #reportWrapper { display: block !important; width: 100%; border:none; padding:0; box-shadow: none; }
-            .report-grid { grid-template-columns: 1fr 1fr; }
-            .report-item { page-break-inside: avoid; border: 1px solid #000 !important; }
-            .highlight-hours { color: #d35400 !important; }
+            #reportWrapper { display: block !important; width: 100%; border:none; padding:0; }
+            .report-grid { grid-template-columns: 1fr 1fr; gap: 5px; }
+            .highlight-hours { color: #000 !important; }
         }
-        @media (max-width: 600px) { .report-grid { grid-template-columns: 1fr; } .main-nav { flex-direction: column; } }
     </style>
 </head>
 <body>
@@ -80,47 +72,45 @@
         <h1>🍕 Godziny Pizza</h1>
     </header>
 
-    <div class="main-nav no-print">
-        <button class="btn btn-report" onclick="toggleReport()">📄 GENERUJ RAPORT</button>
-        <button class="btn btn-settings" onclick="toggleEdit()">⚙️ LISTA OSÓB</button>
+    <div class="main-buttons no-print">
+        <button class="btn btn-report" onclick="toggleReport()">📄 RAPORT</button>
+        <button class="btn btn-settings" onclick="toggleEdit()">⚙️ USTAWIENIA</button>
     </div>
 
     <div id="workerDashboard" class="dashboard no-print"></div>
 
     <div id="reportWrapper">
-        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 12px; border: 1px solid #eee;">
-            <h2 style="margin:0; font-size:1.1rem;">Podgląd Raportu A4</h2>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-print-final" onclick="window.print()">🖨️ DRUKUJ</button>
-                <button class="btn" style="background:#666; color:white;" onclick="toggleReport()">✕</button>
-            </div>
+        <div class="no-print" style="display:flex; justify-content: space-between; margin-bottom: 15px;">
+            <button class="btn btn-save" style="width:auto" onclick="window.print()">🖨️ DRUKUJ A4</button>
+            <button class="btn btn-close" style="width:auto; margin:0" onclick="toggleReport()">✕ ZAMKNIJ</button>
         </div>
-        <div id="reportHeader" style="text-align:center; font-weight:bold; margin-bottom:15px; font-size:12px; text-transform: uppercase;"></div>
+        <div id="reportHeader" style="text-align:center; font-weight:bold; margin-bottom:10px;"></div>
         <div id="reportContent" class="report-grid"></div>
     </div>
 
     <div id="detailsWrapper">
         <div class="table-header">
             <h2 id="currentWorkerName" style="margin:0; color:var(--primary);">Pracownik</h2>
-            <input type="date" id="mondayDate" class="date-input" onchange="updateTableDates(); updateReport();">
+            <input type="date" id="mondayDate" style="padding:5px;" onchange="updateTableDates(); updateReport();">
         </div>
         <table>
             <thead><tr><th>Dzień</th><th>Data</th><th>Od — Do</th><th>Suma</th></tr></thead>
             <tbody id="tableBody"></tbody>
             <tfoot>
-                <tr class="total-row"><td colspan="3" style="text-align:right">SUMA:</td><td id="grandTotal">0.00</td></tr>
+                <tr style="background:#2c3e50; color:white; font-weight:bold;">
+                    <td colspan="3" style="text-align:right">SUMA:</td><td id="grandTotal">0.00</td>
+                </tr>
             </tfoot>
         </table>
         <button class="btn btn-close no-print" onclick="toggleWorker('')">✕ ZAMKNIJ EDYCJĘ</button>
     </div>
 
-    <div class="admin-tools no-print">
-        <div id="editSection" style="display:none; background:white; padding:25px; border-radius:20px; box-shadow: var(--shadow); border: 1px solid #eee;">
-            <h3 style="margin-top:0;">Zarządzaj Pracownikami</h3>
-            <div id="inputList" style="margin-bottom:20px;"></div>
-            <button class="btn" style="background:#2ecc71; color:white; width:100%;" onclick="addNewWorkerField()">+ DODAJ NOWEGO</button>
-            <button class="btn" style="background:var(--primary); color:white; width:100%; margin-top:10px;" onclick="saveWorkers()">💾 ZAPISZ ZMIANY</button>
-        </div>
+    <div id="editSection" class="no-print" style="display:none; background:white; padding:20px; border-radius:15px; border:1px solid #ddd;">
+        <h3 style="margin-top:0;">Lista Pracowników</h3>
+        <div id="inputList"></div>
+        <button class="btn btn-settings" style="width:100%; margin-bottom:10px;" onclick="addNewWorkerField()">+ DODAJ MIEJSCE</button>
+        <button class="btn btn-save" onclick="saveWorkers()">💾 ZAPISZ LISTĘ</button>
+        <button class="btn btn-close" onclick="toggleEdit()">✕ ZAMKNIJ</button>
     </div>
 </div>
 
@@ -152,7 +142,6 @@
         const tOpts = getTimeOptions();
 
         daysArr.forEach((d, i) => {
-            let dateCell = (i === 0) ? `Poniedziałek` : `<span id="date-${i}"></span>`;
             tbody.innerHTML += `<tr><td><strong>${d}</strong></td><td id="date-label-${i}">-</td><td>
                 <select id="s${i}" onchange="saveData(${i})">${tOpts}</select>
                 <select id="e${i}" onchange="saveData(${i})">${tOpts}</select>
@@ -170,11 +159,7 @@
             const card = document.createElement('div');
             card.className = `worker-card ${activeWorker === w ? 'active' : ''}`;
             card.onclick = () => toggleWorker(w);
-            card.innerHTML = `
-                <div style="font-size:1.5rem">👤</div>
-                <span class="card-name">${w}</span>
-                <span class="card-hours">${sum}h</span>
-            `;
+            card.innerHTML = `<span class="card-name">${w}</span><span class="card-hours">${sum}h</span>`;
             dash.appendChild(card);
         });
     }
@@ -187,6 +172,7 @@
         } else {
             activeWorker = name; loadWorkerData(name);
             document.getElementById('detailsWrapper').style.display = "block";
+            window.scrollTo({ top: document.getElementById('detailsWrapper').offsetTop - 20, behavior: 'smooth' });
         }
         renderDashboard();
     }
@@ -237,7 +223,7 @@
         const content = document.getElementById('reportContent');
         const header = document.getElementById('reportHeader');
         const mon = new Date(document.getElementById('mondayDate').value);
-        header.innerText = `OKRES: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}`;
+        header.innerText = `RAPORT: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}`;
         content.innerHTML = "";
         workers.forEach(w => {
             const data = allHoursData[w]; if(!data) return;
@@ -258,8 +244,7 @@
         const mon = new Date(monVal);
         daysArr.forEach((_, i) => {
             const cur = new Date(mon); cur.setDate(mon.getDate() + i);
-            const target = document.getElementById(`date-label-${i}`);
-            if(target) target.innerText = cur.toLocaleDateString().slice(0,5);
+            document.getElementById(`date-label-${i}`).innerText = cur.toLocaleDateString().slice(0,5);
         });
     }
 
@@ -276,8 +261,8 @@
         list.innerHTML = "";
         workers.forEach((w, index) => {
             list.innerHTML += `<div class="worker-edit-row">
-                <input type="text" class="worker-input" value="${w}" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
-                <button class="btn-del" onclick="removeWorker(${index})">USUŃ</button>
+                <input type="text" class="worker-input" value="${w}" style="flex:1; padding:8px;">
+                <button class="btn-del" onclick="removeWorker(${index})">X</button>
             </div>`;
         });
         if(workers.length === 0) addNewWorkerField();
@@ -287,8 +272,8 @@
         const list = document.getElementById('inputList');
         const div = document.createElement('div');
         div.className = "worker-edit-row";
-        div.innerHTML = `<input type="text" class="worker-input" value="" placeholder="Imię" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
-                         <button class="btn-del" onclick="this.parentElement.remove()">USUŃ</button>`;
+        div.innerHTML = `<input type="text" class="worker-input" value="" placeholder="Imię" style="flex:1; padding:8px;">
+                         <button class="btn-del" onclick="this.parentElement.remove()">X</button>`;
         list.appendChild(div);
     }
 
