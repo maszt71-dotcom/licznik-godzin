@@ -21,7 +21,7 @@
         .card-name { display: block; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: var(--primary); }
         .card-hours { font-size: 1.8rem; font-weight: 900; color: var(--text); }
 
-        /* TABELA EDYCJI GODZIN */
+        /* TABELA EDYCJI */
         #detailsWrapper { 
             display: none; background: var(--white); padding: 25px; border-radius: 15px; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 40px;
@@ -34,26 +34,24 @@
         .total-row { background: var(--text); color: white; font-weight: bold; }
         
         select, .date-input { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-family: inherit; }
-        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .btn-print { background: #27ae60; color: white; width: 100%; font-size: 1.1rem; margin-bottom: 20px; }
-        .btn-close { background: #95a5a6; color: white; width: 100%; margin-top: 10px; }
-        .btn-close:hover { background: #7f8c8d; }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; margin: 5px; }
+        .btn-print { background: #27ae60; color: white; width: calc(100% - 10px); font-size: 1.1rem; }
+        .btn-report { background: #8e44ad; color: white; width: calc(100% - 10px); font-size: 1.1rem; }
+        .btn-close { background: #95a5a6; color: white; width: calc(100% - 10px); }
         .btn-wolne { background: #f8f9fa; border: 1px solid #ddd; cursor: pointer; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         
-        #printArea { display: none; }
+        /* RAPORT PODGLĄD */
+        #reportWrapper { display: none; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .report-item { margin-bottom: 50px; border-bottom: 2px dashed #eee; padding-bottom: 20px; }
 
-        /* SEKCJA ZARZĄDZANIA LISTĄ OSÓB */
         .admin-tools { text-align: center; margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; }
         #editSection { display: none; margin-top: 20px; background: #fff; padding: 20px; border-radius: 10px; border: 1px solid #ddd; }
-        .input-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
 
         @media print {
             .no-print { display: none !important; }
-            #printArea { display: block !important; }
+            #reportWrapper { display: block !important; box-shadow: none; padding: 0; }
             body { background: white; padding: 0; }
-            .print-page-break { page-break-after: always; margin-top: 30px; border-top: 2px solid #000; padding-top: 20px; }
-            table { font-size: 12px; }
-            th { background: #f0f0f0 !important; color: black !important; }
+            .report-item { page-break-after: always; border: none; }
         }
     </style>
 </head>
@@ -62,14 +60,25 @@
 <div class="container">
     <h1 class="no-print">🍕 Panel Godziny Pizza</h1>
 
-    <button class="btn btn-print no-print" onclick="prepareAndPrint()">🖨️ DRUKUJ RAPORT WSZYSTKICH PRACOWNIKÓW</button>
+    <div class="no-print" style="text-align:center;">
+        <button class="btn btn-print" onclick="window.print()">🖨️ DRUKUJ OD RAZU (PDF)</button>
+        <button class="btn btn-report" onclick="toggleReport()">📄 POKAŻ RAPORT ZBIORCZY</button>
+    </div>
 
     <div id="workerDashboard" class="dashboard no-print"></div>
+
+    <div id="reportWrapper">
+        <div class="no-print" style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="color: #8e44ad; margin:0;">Raport Zbiorczy</h2>
+            <button class="btn btn-close" style="width:auto;" onclick="toggleReport()">✕ ZAMKNIJ RAPORT</button>
+        </div>
+        <div id="reportContent"></div>
+    </div>
 
     <div id="detailsWrapper">
         <div class="table-header">
             <h2 id="currentWorkerName" style="margin:0; color:var(--primary);">Pracownik</h2>
-            <span style="font-size: 0.9rem; color: #888;">Wprowadź godziny poniżej</span>
+            <span style="font-size: 0.9rem; color: #888;">Edycja godzin</span>
         </div>
         <table>
             <thead><tr><th>Dzień</th><th>Data</th><th>Od — Do</th><th>Suma</th></tr></thead>
@@ -81,20 +90,17 @@
                 </tr>
             </tfoot>
         </table>
-        <button class="btn btn-close no-print" onclick="toggleWorker(activeWorker)">✕ ZAMKNIJ EDYCJĘ GODZIN</button>
+        <button class="btn btn-close no-print" onclick="toggleWorker(activeWorker)">✕ ZAMKNIJ EDYCJĘ</button>
     </div>
 
     <div class="admin-tools no-print">
-        <button class="btn" style="background:#3498db; color:white;" onclick="toggleEdit()">⚙️ Lista Pracowników (Dodaj/Usuń)</button>
+        <button class="btn" style="background:#3498db; color:white;" onclick="toggleEdit()">⚙️ Lista Pracowników</button>
         <div id="editSection">
-            <h3 style="margin-top:0;">Zarządzaj Pracownikami</h3>
-            <div id="inputContainer" class="input-list"></div>
-            <button class="btn" style="background:#2ecc71; color:white; width:100%; margin-bottom:10px;" onclick="saveWorkers()">💾 ZAPISZ NOWĄ LISTĘ</button>
-            <button class="btn btn-close" style="background:#e74c3c;" onclick="toggleEdit()">✕ ANULUJ / ZAMKNIJ LISTĘ</button>
+            <div id="inputContainer" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;"></div>
+            <button class="btn" style="background:#2ecc71; color:white; width:100%; margin-bottom:10px;" onclick="saveWorkers()">ZAPISZ LISTĘ</button>
+            <button class="btn btn-close" style="background:#e74c3c; width:100%;" onclick="toggleEdit()">ZAMKNIJ LISTĘ</button>
         </div>
     </div>
-
-    <div id="printArea"></div>
 </div>
 
 <script>
@@ -125,7 +131,7 @@
 
         daysArr.forEach((d, i) => {
             let dateCell = (i === 0) 
-                ? `<input type="date" id="mondayDate" class="date-input" value="${mon.toISOString().split('T')[0]}" onchange="updateTableDates()">`
+                ? `<input type="date" id="mondayDate" class="date-input" value="${mon.toISOString().split('T')[0]}" onchange="updateTableDates(); updateReport();">`
                 : `<span id="date-${i}"></span>`;
             tbody.innerHTML += `<tr><td><strong>${d}</strong></td><td>${dateCell}</td><td>
                 <select id="s${i}" onchange="saveData(${i})">${tOpts}</select>
@@ -150,6 +156,7 @@
     }
 
     function toggleWorker(name) {
+        document.getElementById('reportWrapper').style.display = "none";
         if (activeWorker === name || name === "") {
             activeWorker = "";
             document.getElementById('detailsWrapper').style.display = "none";
@@ -173,12 +180,6 @@
         document.getElementById('grandTotal').innerText = allHoursData[name]?.total || "0.00";
     }
 
-    function setWolne(i) {
-        document.getElementById(`s${i}`).value = "00:00";
-        document.getElementById(`e${i}`).value = "00:00";
-        saveData(i);
-    }
-
     function saveData(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
         const out = document.getElementById(`r${i}`);
@@ -190,65 +191,64 @@
             out.innerText = (s === e && s === "00:00") ? "0.00" : diff.toFixed(2);
         } else { out.innerText = "0.00"; }
 
-        let total = 0;
-        let days = [];
+        let total = 0, days = [];
         for(let j=0; j<7; j++) {
-            const val = parseFloat(document.getElementById(`r${j}`).innerText) || 0;
-            total += val;
-            days.push({
-                s: document.getElementById(`s${j}`).value,
-                e: document.getElementById(`e${j}`).value,
-                r: document.getElementById(`r${j}`).innerText
-            });
+            total += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
+            days.push({s:document.getElementById(`s${j}`).value, e:document.getElementById(`e${j}`).value, r:document.getElementById(`r${j}`).innerText});
         }
-        
         allHoursData[activeWorker] = { total: total.toFixed(2), days: days };
         localStorage.setItem('godzinyPizzaDetailedData', JSON.stringify(allHoursData));
         document.getElementById('grandTotal').innerText = total.toFixed(2);
         renderDashboard();
     }
 
+    function toggleReport() {
+        const rw = document.getElementById('reportWrapper');
+        const dw = document.getElementById('detailsWrapper');
+        activeWorker = "";
+        dw.style.display = "none";
+        renderDashboard();
+        
+        if(rw.style.display === "block") {
+            rw.style.display = "none";
+        } else {
+            updateReport();
+            rw.style.display = "block";
+            window.scrollTo({ top: rw.offsetTop - 20, behavior: 'smooth' });
+        }
+    }
+
+    function updateReport() {
+        const content = document.getElementById('reportContent');
+        const mon = new Date(document.getElementById('mondayDate').value);
+        content.innerHTML = `<h2 style="text-align:center; border-bottom: 2px solid #333; padding-bottom:10px;">RAPORT ZBIORCZY: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}</h2>`;
+
+        workers.forEach(w => {
+            const data = allHoursData[w];
+            if(!data) return;
+            let htm = `<div class="report-item"><h3>Pracownik: ${w}</h3><table style="font-size:13px;"><thead><tr><th>Dzień</th><th>Data</th><th>Od</th><th>Do</th><th>Suma</th></tr></thead><tbody>`;
+            daysArr.forEach((dn, i) => {
+                const cur = new Date(mon); cur.setDate(mon.getDate() + i);
+                htm += `<tr><td>${dn}</td><td>${cur.toLocaleDateString()}</td><td>${data.days[i].s || '--'}</td><td>${data.days[i].e || '--'}</td><td>${data.days[i].r}h</td></tr>`;
+            });
+            htm += `</tbody><tfoot><tr style="font-weight:bold; background:#f9f9f9;"><td colspan="4" style="text-align:right">SUMA:</td><td>${data.total}h</td></tr></tfoot></table></div>`;
+            content.innerHTML += htm;
+        });
+    }
+
+    function setWolne(i) { document.getElementById(`s${i}`).value = "00:00"; document.getElementById(`e${i}`).value = "00:00"; saveData(i); }
     function updateTableDates() {
-        const monVal = document.getElementById('mondayDate').value;
-        const mon = new Date(monVal);
+        const mon = new Date(document.getElementById('mondayDate').value);
         daysArr.forEach((_, i) => { if (i > 0) {
             const cur = new Date(mon); cur.setDate(mon.getDate() + i);
             document.getElementById(`date-${i}`).innerText = cur.toLocaleDateString();
         }});
     }
-
-    function prepareAndPrint() {
-        const printArea = document.getElementById('printArea');
-        const monVal = document.getElementById('mondayDate').value;
-        const mon = new Date(monVal);
-        printArea.innerHTML = `<h1 style="text-align:center;">Raport Tygodniowy: ${mon.toLocaleDateString()} - ${new Date(new Date(mon).setDate(mon.getDate()+6)).toLocaleDateString()}</h1>`;
-
-        workers.forEach(w => {
-            const data = allHoursData[w];
-            if(!data) return;
-            let tableHtml = `<div class="print-page-break"><h2>Pracownik: ${w}</h2><table><thead><tr><th>Dzień</th><th>Data</th><th>Od</th><th>Do</th><th>Suma</th></tr></thead><tbody>`;
-            daysArr.forEach((dayName, i) => {
-                const cur = new Date(mon); cur.setDate(mon.getDate() + i);
-                const d = data.days[i];
-                tableHtml += `<tr><td>${dayName}</td><td>${cur.toLocaleDateString()}</td><td>${d.s || '--'}</td><td>${d.e || '--'}</td><td>${d.r}h</td></tr>`;
-            });
-            tableHtml += `</tbody><tfoot><tr style="font-weight:bold; background:#f0f0f0;"><td colspan="4" style="text-align:right">ŁĄCZNIE:</td><td>${data.total}h</td></tr></tfoot></table></div>`;
-            printArea.innerHTML += tableHtml;
-        });
-        window.print();
-    }
-
     function renderEditList() {
         const con = document.getElementById('inputContainer'); con.innerHTML = "";
-        for(let i=0; i<12; i++) {
-            con.innerHTML += `<input type="text" style="padding:10px; border:1px solid #ddd; border-radius:5px;" id="winp${i}" value="${workers[i]||''}" placeholder="Pracownik ${i+1}">`;
-        }
+        for(let i=0; i<12; i++) con.innerHTML += `<input type="text" style="padding:10px; border:1px solid #ddd; border-radius:5px;" id="winp${i}" value="${workers[i]||''}" placeholder="Imię ${i+1}">`;
     }
-    function toggleEdit() { 
-        const s = document.getElementById('editSection'); 
-        s.style.display = s.style.display==='block'?'none':'block'; 
-        if(s.style.display === 'block') window.scrollTo({ top: s.offsetTop - 20, behavior: 'smooth' });
-    }
+    function toggleEdit() { const s = document.getElementById('editSection'); s.style.display = s.style.display==='block'?'none':'block'; }
     function saveWorkers() {
         let nw = []; for(let i=0; i<12; i++) { let v = document.getElementById(`winp${i}`).value.trim(); if(v) nw.push(v); }
         workers = nw; localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
