@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godziny Pizza</title>
+    <title>Godziny Pizza - Podsumowanie</title>
     <style>
         :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 900px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 950px; }
         .no-print { background: #fff8f2; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; }
+        
+        /* Styl podsumowania u góry */
+        .summary-box { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; background: #fff; border: 2px solid var(--primary); padding: 15px; border-radius: 8px; }
+        .summary-item { text-align: center; padding: 10px; background: #fdf2e9; border-radius: 5px; border: 1px solid #fab1a0; }
+        .summary-name { font-weight: bold; font-size: 0.9rem; display: block; margin-bottom: 5px; color: #d35400; }
+        .summary-hours { font-size: 1.2rem; font-weight: bold; color: var(--text); }
+
         .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
         select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -20,16 +27,20 @@
         .btn-edit { background: #3498db; color: white; }
         .btn-wolne { background: #fdf2f2; border: 1px solid #f5c6cb; color: #721c24; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-left: 8px; cursor: pointer; font-weight: bold; }
         #editSection { display: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
-        @media print { .no-print, .btn-wolne { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
+        @media print { .no-print, .btn-wolne, .summary-box { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="no-print">
+        <h3 style="margin-top:0; color:var(--primary)">Podgląd wszystkich pracowników:</h3>
+        <div id="summaryDisplay" class="summary-box">
+            </div>
+
         <div class="controls">
             <div>
-                <label>Osoba:</label><br>
+                <label>Edytuj teraz osobę:</label><br>
                 <select id="workerSelect" onchange="changeWorker()"></select>
             </div>
             <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
@@ -37,7 +48,7 @@
         </div>
         <div id="editSection">
             <div id="inputContainer"></div>
-            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ</button>
+            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ IMION</button>
         </div>
     </div>
 
@@ -53,7 +64,7 @@
         <tbody id="tableBody"></tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM W TYGODNIU:</td>
+                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM (TEN ARKUSZ):</td>
                 <td id="grandTotal">0.00</td>
             </tr>
         </tfoot>
@@ -63,6 +74,8 @@
 <script>
     const daysArr = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
+    // Obiekt do przechowywania sum wszystkich pracowników
+    let allHours = JSON.parse(localStorage.getItem('godzinyPizzaAllSums')) || {};
 
     function getTimeOptions() {
         let htm = '<option value="">--:--</option>'; 
@@ -98,10 +111,13 @@
                 </tr>`;
         });
         renderWorkers();
+        updateSummary();
     }
 
     function changeWorker() {
-        document.getElementById('displayWorker').innerText = document.getElementById('workerSelect').value || "Godziny Pizza";
+        const currentWorker = document.getElementById('workerSelect').value;
+        document.getElementById('displayWorker').innerText = currentWorker || "Godziny Pizza";
+        // Resetujemy tabelę do kreseczek
         for(let i=0; i<7; i++) {
             document.getElementById(`s${i}`).value = "";
             document.getElementById(`e${i}`).value = "";
@@ -119,34 +135,68 @@
     function renderWorkers() {
         const sel = document.getElementById('workerSelect'), con = document.getElementById('inputContainer');
         sel.innerHTML = '<option value="">-- Wybierz osobę --</option>'; con.innerHTML = "";
-        for(let i=0; i<10; i++) {
-            const v = workers[i] || "";
+        workers.forEach((v, i) => {
             if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
-            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px; width:95%;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
+            con.innerHTML += `<input type="text" style="width:95%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v||''}" placeholder="Pracownik ${i+1}">`;
+        });
+        // Zawsze pokazuj 10 pól w edycji
+        if(workers.length < 10) {
+            for(let j=workers.length; j<10; j++) {
+                con.innerHTML += `<input type="text" style="width:95%; margin-bottom:5px; padding:8px;" id="winp${j}" value="" placeholder="Pracownik ${j+1}">`;
+            }
         }
+    }
+
+    function updateSummary() {
+        const display = document.getElementById('summaryDisplay');
+        display.innerHTML = "";
+        workers.forEach(w => {
+            if(w) {
+                const h = allHours[w] || "0.00";
+                display.innerHTML += `
+                    <div class="summary-item">
+                        <span class="summary-name">${w}</span>
+                        <span class="summary-hours">${h} h</span>
+                    </div>`;
+            }
+        });
     }
 
     function toggleEdit() { const s = document.getElementById('editSection'); s.style.display = s.style.display==='block'?'none':'block'; }
 
     function saveWorkers() {
-        for(let i=0; i<10; i++) workers[i] = document.getElementById(`winp${i}`).value.trim();
+        let newWorkers = [];
+        for(let i=0; i<10; i++) {
+            let val = document.getElementById(`winp${i}`).value.trim();
+            if(val) newWorkers.push(val);
+        }
+        workers = newWorkers;
         localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
-        renderWorkers(); toggleEdit();
+        renderWorkers(); toggleEdit(); updateSummary();
     }
 
     function calc(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
         const out = document.getElementById(`r${i}`);
-        if(!s || !e) { 
-            out.innerText = "0.00"; 
-        } else {
+        if(!s || !e) { out.innerText = "0.00"; }
+        else {
             let sP = s.split(':'), eP = e.split(':');
             let d = (parseInt(eP[0]) + parseInt(eP[1])/60) - (parseInt(sP[0]) + parseInt(sP[1])/60);
             if (d < 0) d += 24;
             out.innerText = (s === e && s === "00:00") ? "0.00" : d.toFixed(2);
         }
+        
         let t = 0; for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
-        document.getElementById('grandTotal').innerText = t.toFixed(2);
+        const finalSum = t.toFixed(2);
+        document.getElementById('grandTotal').innerText = finalSum;
+
+        // ZAPISZ SUMĘ DLA AKTUALNEGO PRACOWNIKA
+        const currentWorker = document.getElementById('workerSelect').value;
+        if(currentWorker) {
+            allHours[currentWorker] = finalSum;
+            localStorage.setItem('godzinyPizzaAllSums', JSON.stringify(allHours));
+            updateSummary();
+        }
     }
     init();
 </script>
