@@ -38,15 +38,22 @@
         .btn-close { background: #95a5a6; color: white; }
         .btn-wolne { background: #f8f9fa; border: 1px solid #ddd; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
         
-        /* RAPORT A4 - OPTYMALIZACJA */
+        /* RAPORT A4 */
         #reportWrapper { display: none; background: white; padding: 10px; border-radius: 12px; margin-top: 15px; }
         .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .report-item { border: 1px solid #000; padding: 6px; margin-bottom: 5px; }
-        .report-item h3 { margin: 0 0 4px 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #000; color: #000; }
+        
+        /* NAGŁÓWEK RAPORTU: Imię + Suma obok siebie */
+        .report-worker-header { 
+            display: flex; justify-content: space-between; align-items: flex-end; 
+            border-bottom: 1px solid #000; margin-bottom: 4px; padding-bottom: 2px;
+        }
+        .report-worker-header h3 { margin: 0; font-size: 1rem; font-weight: 900; text-transform: uppercase; color: #000; }
+        .report-summary-text { font-size: 11px; font-weight: bold; }
+        .highlight-hours { color: var(--primary); font-size: 13px; font-weight: 900; }
+
         .report-table { font-size: 8px !important; width: 100%; border-collapse: collapse; }
         .report-table th, .report-table td { border: 1px solid #000; padding: 1px 2px; text-align: center; }
-        .report-summary-line { font-size: 10px; font-weight: bold; margin-top: 4px; text-align: right; }
-        .highlight-hours { color: var(--primary); font-size: 11px; }
 
         /* LISTA EDYCJI */
         .admin-tools { text-align: center; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; }
@@ -60,7 +67,7 @@
             body { background: white; padding: 0; }
             .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .report-item { page-break-inside: avoid; border: 1px solid #000 !important; }
-            .highlight-hours { color: #d35400 !important; } /* Ciemniejszy pomarańcz do druku */
+            .highlight-hours { color: #d35400 !important; } 
         }
     </style>
 </head>
@@ -220,11 +227,18 @@
         content.innerHTML = "";
         workers.forEach(w => {
             const data = allHoursData[w]; if(!data) return;
-            let htm = `<div class="report-item"><h3>${w}</h3><table class="report-table"><tr>`;
+            let htm = `
+                <div class="report-item">
+                    <div class="report-worker-header">
+                        <h3>${w}</h3>
+                        <div class="report-summary-text">Suma godzin: <span class="highlight-hours">${data.total}h</span></div>
+                    </div>
+                    <table class="report-table">
+                        <tr>`;
             daysArr.forEach(dn => htm += `<th>${dn}</th>`);
             htm += `</tr><tr>`;
             data.days.forEach(d => htm += `<td>${d.r > 0 ? d.r : '-'}</td>`);
-            htm += `</tr></table><div class="report-summary-line">Suma godzin: <span class="highlight-hours">${data.total}h</span></div></div>`;
+            htm += `</tr></table></div>`;
             content.innerHTML += htm;
         });
     }
