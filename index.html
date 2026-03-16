@@ -1,4 +1,39 @@
-            <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Godziny Pizza</title>
+    <style>
+        :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 900px; }
+        .no-print { background: #fff8f2; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: var(--primary); color: white; padding: 12px; }
+        td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        .total-row { background: #2c3e50; color: white; font-weight: bold; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-print { background: #27ae60; color: white; }
+        .btn-edit { background: #3498db; color: white; }
+        .btn-wolne { background: #fdf2f2; border: 1px solid #f5c6cb; color: #721c24; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-left: 8px; cursor: pointer; font-weight: bold; }
+        #editSection { display: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
+        @media print { .no-print, .btn-wolne { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="no-print">
+        <div class="controls">
+            <div>
+                <label>Osoba:</label><br>
+                <select id="workerSelect" onchange="changeWorker()"></select>
+            </div>
+            <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
+            <button class="btn btn-print" onclick="window.print()">🖨️ PDF</button>
         </div>
         <div id="editSection">
             <div id="inputContainer"></div>
@@ -18,7 +53,7 @@
         <tbody id="tableBody"></tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM W TYGODNIU:</td>
+                <td colspan="3" style="text-align:right; padding-right:15px">RAZEM:</td>
                 <td id="grandTotal">0.00</td>
             </tr>
         </tfoot>
@@ -30,7 +65,7 @@
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
 
     function getTimeOptions() {
-        let htm = '';
+        let htm = '<option value="">--:--</option>'; 
         for(let h=0; h<24; h++) {
             for(let m=0; m<60; m+=30) {
                 let hh = h<10?'0'+h:h, mm = m===0?'00':m;
@@ -44,7 +79,6 @@
         const now = new Date();
         const mon = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
         document.getElementById('displayDates').innerText = `Tydzień od ${mon.toLocaleDateString()}`;
-        
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         const tOpts = getTimeOptions();
@@ -67,9 +101,13 @@
     }
 
     function changeWorker() {
-        const val = document.getElementById('workerSelect').value;
-        document.getElementById('displayWorker').innerText = val || "Godziny Pizza";
-        for(let i=0; i<7; i++) { setWolne(i); }
+        document.getElementById('displayWorker').innerText = document.getElementById('workerSelect').value || "Godziny Pizza";
+        for(let i=0; i<7; i++) {
+            document.getElementById(`s${i}`).value = "";
+            document.getElementById(`e${i}`).value = "";
+            document.getElementById(`r${i}`).innerText = "0.00";
+        }
+        document.getElementById('grandTotal').innerText = "0.00";
     }
 
     function setWolne(i) {
@@ -99,10 +137,14 @@
     function calc(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
         const out = document.getElementById(`r${i}`);
-        let startParts = s.split(':'), endParts = e.split(':');
-        let d = (parseInt(endParts[0]) + parseInt(endParts[1])/60) - (parseInt(startParts[0]) + parseInt(startParts[1])/60);
-        if (d < 0) d += 24;
-        out.innerText = (s === e) ? "0.00" : d.toFixed(2);
+        if(!s || !e) { 
+            out.innerText = "0.00"; 
+        } else {
+            let sP = s.split(':'), eP = e.split(':');
+            let d = (parseInt(eP[0]) + parseInt(eP[1])/60) - (parseInt(sP[0]) + parseInt(sP[1])/60);
+            if (d < 0) d += 24;
+            out.innerText = (s === e && s === "00:00") ? "0.00" : d.toFixed(2);
+        }
         let t = 0; for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
         document.getElementById('grandTotal').innerText = t.toFixed(2);
     }
