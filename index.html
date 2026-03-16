@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godziny Pizza - Szybki Wybór</title>
+    <title>Godziny Pizza</title>
     <style>
         :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -19,8 +19,8 @@
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
         .btn-fast { background: #eee; border: 1px solid #bbb; padding: 5px 8px; font-size: 12px; border-radius: 4px; margin-left: 5px; cursor: pointer; }
-        .fast-menu { display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; width: 150px; }
-        .fast-opt { display: block; width: 100%; text-align: left; padding: 8px; border: none; background: none; cursor: pointer; font-size: 13px; border-bottom: 1px solid #eee; }
+        .fast-menu { display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; width: 100px; }
+        .fast-opt { display: block; width: 100%; text-align: left; padding: 8px; border: none; background: none; cursor: pointer; font-size: 13px; font-weight: bold; color: #c0392b; }
         .fast-opt:hover { background: #f0f0f0; }
         @media print { .no-print, .btn-fast, .fast-menu { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
     </style>
@@ -31,8 +31,8 @@
     <div class="no-print">
         <div class="controls">
             <div>
-                <label>Osoba:</label><br>
-                <select id="workerSelect" onchange="updateUI()"></select>
+                <label>Wybierz osobę:</label><br>
+                <select id="workerSelect" onchange="changeWorker()"></select>
             </div>
             <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
             <button class="btn btn-print" onclick="window.print()">🖨️ PDF</button>
@@ -64,13 +64,6 @@
 
 <script>
     const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
-    const presets = [
-        {l: "10:00 - 18:00", s: "10:00", e: "18:00"},
-        {l: "12:00 - 20:00", s: "12:00", e: "20:00"},
-        {l: "14:00 - 22:00", s: "14:00", e: "22:00"},
-        {l: "Wolne", s: "", e: ""}
-    ];
-    
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
 
     function getTimeOptions() {
@@ -111,10 +104,22 @@
         renderWorkers();
     }
 
+    function changeWorker() {
+        const val = document.getElementById('workerSelect').value;
+        document.getElementById('displayWorker').innerText = val || "Godziny Pizza";
+        for(let i=0; i<7; i++) {
+            document.getElementById(`s${i}`).value = "";
+            document.getElementById(`e${i}`).value = "";
+            document.getElementById(`r${i}`).innerText = "0.00";
+        }
+        document.getElementById('grandTotal').innerText = "0.00";
+    }
+
     function toggleFast(i) {
         const m = document.getElementById(`f${i}`);
         if(m.style.display === "block") { m.style.display="none"; return; }
-        m.innerHTML = presets.map(p => `<button class="fast-opt" onclick="setT(${i},'${p.s}','${p.e}')">${p.l}</button>`).join('');
+        // Menu tylko z opcją "Wolne"
+        m.innerHTML = `<button class="fast-opt" onclick="setT(${i},'','')">❌ Wolne</button>`;
         m.style.display = "block";
     }
 
@@ -127,11 +132,11 @@
 
     function renderWorkers() {
         const sel = document.getElementById('workerSelect'), con = document.getElementById('inputContainer');
-        sel.innerHTML = '<option value="">-- Wybierz --</option>'; con.innerHTML = "";
+        sel.innerHTML = '<option value="">-- Wybierz osobę --</option>'; con.innerHTML = "";
         for(let i=0; i<10; i++) {
             const v = workers[i] || "";
             if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
-            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
+            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Imię pracownika ${i+1}">`;
         }
     }
 
@@ -142,8 +147,6 @@
         localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
         renderWorkers(); toggleEdit();
     }
-
-    function updateUI() { document.getElementById('displayWorker').innerText = document.getElementById('workerSelect').value || "Godziny Pizza"; }
 
     function calc(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
