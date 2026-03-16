@@ -19,7 +19,7 @@
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
         #editSection { display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; }
-        .worker-input { margin-bottom: 5px; width: 100%; box-sizing: border-box; }
+        .worker-input { margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
         @media print { .no-print { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } }
     </style>
 </head>
@@ -64,7 +64,6 @@
 
 <script>
     const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
-    // Ładowanie imion z pamięci przeglądarki lub ustawienie domyślnych
     let workers = JSON.parse(localStorage.getItem('pizzeriaWorkers')) || Array.from({length: 10}, (_, i) => `Pracownik ${i+1}`);
 
     function init() {
@@ -93,7 +92,7 @@
 
         workers.forEach((w, i) => {
             select.innerHTML += `<option value="${w}">${w}</option>`;
-            container.innerHTML += `<input type="text" class="worker-input" id="winp${i}" value="${w}" placeholder="Pracownik ${i+1}">`;
+            container.innerHTML += `<input type="text" class="worker-input" id="winp${i}" value="${w}">`;
         });
     }
 
@@ -110,7 +109,7 @@
         localStorage.setItem('pizzeriaWorkers', JSON.stringify(workers));
         renderWorkerList();
         toggleEdit();
-        alert("Lista pracowników została zaktualizowana!");
+        alert("Lista zapisana!");
     }
 
     function updateUI() {
@@ -129,7 +128,6 @@
         for(let j=0; j<7; j++) total += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
-
     init();
 </script>
 </body>
