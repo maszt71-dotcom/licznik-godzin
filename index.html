@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Licznik Godzin - Kod Pizza</title>
+    <title>Godziny Pizza - Panel</title>
     <style>
         :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -15,11 +15,11 @@
         th { background: var(--primary); color: white; padding: 10px; }
         td { border: 1px solid #eee; padding: 8px; text-align: center; }
         .total-row { background: #2c3e50; color: white; font-weight: bold; }
-        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
         #editSection { display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; }
-        .worker-input { margin-bottom: 5px; width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .worker-input { margin-bottom: 8px; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #bbb; border-radius: 4px; font-size: 15px; }
         @media print { .no-print { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } }
     </style>
 </head>
@@ -29,28 +29,28 @@
     <div class="no-print">
         <div class="controls">
             <div>
-                <label>Wybierz pracownika:</label><br>
+                <label>Wybierz osobę:</label><br>
                 <select id="workerSelect" onchange="updateUI()"></select>
             </div>
-            <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Edytuj listę osób</button>
+            <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Zarządzaj Pracownikami</button>
             <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
         </div>
 
         <div id="editSection">
-            <h4 style="margin:0 0 10px 0">Wpisz imiona (zostaną zapamiętane):</h4>
+            <h4 style="margin:0 0 10px 0">Wpisz imiona (puste pola zostaną ukryte):</h4>
             <div id="inputContainer"></div>
-            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ IMION</button>
+            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZATWIERDŹ I ZAPISZ LISTĘ</button>
         </div>
     </div>
 
     <div style="text-align:center">
-        <h1 id="displayWorker" style="margin:10px 0">Wybierz pracownika</h1>
+        <h1 id="displayWorker" style="margin:10px 0">Godziny Pizza</h1>
         <p id="displayDates" style="color: #666; font-weight: bold;"></p>
     </div>
 
     <table>
         <thead>
-            <tr><th>Dzień</th><th>Data</th><th>Od</th><th>Do</th><th>Suma (h)</th></tr>
+            <tr><th>Dzień</th><th>Data</th><th>Wejście</th><th>Wyjście</th><th>Suma (h)</th></tr>
         </thead>
         <tbody id="tableBody"></tbody>
         <tfoot>
@@ -64,13 +64,14 @@
 
 <script>
     const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
-    let workers = JSON.parse(localStorage.getItem('pizzeriaWorkers')) || Array.from({length: 10}, (_, i) => `Pracownik ${i+1}`);
+    // Zmieniono klucz zapisu na "godzinyPizzaWorkers"
+    let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
 
     function init() {
         const now = new Date();
         const mon = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
         const sun = new Date(new Date(mon).setDate(mon.getDate() + 6));
-        document.getElementById('displayDates').innerText = `Tydzień: ${mon.toLocaleDateString()} - ${sun.toLocaleDateString()}`;
+        document.getElementById('displayDates').innerText = `Okres: ${mon.toLocaleDateString()} - ${sun.toLocaleDateString()}`;
 
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
@@ -87,13 +88,16 @@
     function renderWorkerList() {
         const select = document.getElementById('workerSelect');
         const container = document.getElementById('inputContainer');
-        select.innerHTML = '<option value="">-- Wybierz pracownika --</option>';
+        select.innerHTML = '<option value="">-- Wybierz osobę --</option>';
         container.innerHTML = "";
 
-        workers.forEach((w, i) => {
-            select.innerHTML += `<option value="${w}">${w}</option>`;
-            container.innerHTML += `<input type="text" class="worker-input" id="winp${i}" value="${w}">`;
-        });
+        for(let i=0; i<10; i++) {
+            const currentVal = workers[i] || "";
+            if(currentVal) {
+                select.innerHTML += `<option value="${currentVal}">${currentVal}</option>`;
+            }
+            container.innerHTML += `<input type="text" class="worker-input" id="winp${i}" value="${currentVal}" placeholder="Miejsce ${i+1} - wpisz imię">`;
+        }
     }
 
     function toggleEdit() {
@@ -102,19 +106,21 @@
     }
 
     function saveWorkers() {
+        let newWorkers = [];
         for(let i=0; i<10; i++) {
-            const val = document.getElementById(`winp${i}`).value;
-            workers[i] = val.trim() !== "" ? val : `Pracownik ${i+1}`;
+            const val = document.getElementById(`winp${i}`).value.trim();
+            if(val !== "") newWorkers.push(val);
         }
-        localStorage.setItem('pizzeriaWorkers', JSON.stringify(workers));
+        workers = newWorkers;
+        localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
         renderWorkerList();
         toggleEdit();
-        alert("Lista zapisana!");
+        alert("Lista pracowników została zaktualizowana!");
     }
 
     function updateUI() {
         const val = document.getElementById('workerSelect').value;
-        document.getElementById('displayWorker').innerText = val || "Wybierz pracownika";
+        document.getElementById('displayWorker').innerText = val || "Godziny Pizza";
     }
 
     function calc(i) {
