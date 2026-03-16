@@ -3,107 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Licznik Godzin - GitHub Edition</title>
+    <title>Lista Godzin - 10 Pracowników</title>
     <style>
-        :root { --primary: #2563eb; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); width: 100%; max-width: 900px; }
-        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-        .input-group { margin-bottom: 20px; }
-        input[type="text"] { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; width: 300px; font-size: 1rem; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { background: #f1f5f9; text-align: left; padding: 12px; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
-        input[type="time"] { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; }
-        .row-sum { font-weight: 700; color: var(--primary); }
-        .total-box { margin-top: 20px; padding: 15px; background: #eff6ff; border-radius: 8px; text-align: right; font-size: 1.2rem; }
-        @media print { .no-print { display: none; } .card { box-shadow: none; border: none; } }
+        :root { --primary: #e67e22; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 850px; }
+        h2 { color: #333; margin-top: 0; border-left: 5px solid var(--primary); padding-left: 15px; }
+        .controls { display: flex; gap: 15px; margin-bottom: 25px; align-items: center; background: #fff8f2; padding: 15px; border-radius: 8px; }
+        select, input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background: var(--primary); color: white; padding: 12px; }
+        td { border: 1px solid #eee; padding: 10px; text-align: center; }
+        input[type="time"] { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .total-area { text-align: right; font-size: 1.3rem; font-weight: bold; color: #2c3e50; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .btn-print { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        @media print { .no-print { display: none; } .card { box-shadow: none; border: 1px solid #000; } }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>Tygodniowy Arkusz Godzin</h1>
-    
-    <div class="input-group">
-        <label><strong>Pracownik:</strong></label><br>
-        <input type="text" id="name" placeholder="Imię i Nazwisko">
+    <div class="no-print">
+        <h2>Panel Zarządzania Godzinami</h2>
+        <div class="controls">
+            <div>
+                <label>Wybierz pracownika:</label><br>
+                <select id="workerSelect" onchange="updateName()">
+                    <option value="">-- Wybierz z listy --</option>
+                    <option>Pracownik 1</option>
+                    <option>Pracownik 2</option>
+                    <option>Pracownik 3</option>
+                    <option>Pracownik 4</option>
+                    <option>Pracownik 5</option>
+                    <option>Pracownik 6</option>
+                    <option>Pracownik 7</option>
+                    <option>Pracownik 8</option>
+                    <option>Pracownik 9</option>
+                    <option>Pracownik 10</option>
+                </select>
+            </div>
+            <div>
+                <label>Lub wpisz ręcznie:</label><br>
+                <input type="text" id="manualName" placeholder="Imię i Nazwisko" oninput="updateName()">
+            </div>
+        </div>
     </div>
+
+    <h1 id="displayWorker" style="text-align: center; color: #2c3e50;">Arkusz Czasu Pracy</h1>
+    <p id="displayDate" style="text-align: center; font-weight: bold;"></p>
 
     <table>
         <thead>
             <tr>
-                <th>Dzień</th>
+                <th>Dzień tygodnia</th>
                 <th>Data</th>
-                <th>Od</th>
-                <th>Do</th>
+                <th>Wejście</th>
+                <th>Wyjście</th>
                 <th>Suma (h)</th>
             </tr>
         </thead>
-        <tbody id="rows"></tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 
-    <div class="total-box">
-        <strong>RAZEM W TYGODNIU: <span id="grandTotal">0.00</span> h</strong>
+    <div class="total-area">
+        ŁĄCZNIE W TYGODNIU: <span id="grandTotal">0.00</span> h
     </div>
 
-    <button class="no-print" onclick="window.print()" style="margin-top: 20px; padding: 12px 24px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer;">
-        Wygeneruj PDF / Drukuj
-    </button>
+    <button class="btn-print no-print" onclick="window.print()">Drukuj arkusz (PDF)</button>
 </div>
 
 <script>
     const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
+    const tbody = document.getElementById('tableBody');
     
-    function init() {
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0 (Nie) to 6 (Sob)
-        const diffToMonday = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diffToMonday));
+    // Obliczanie dat tygodnia (poniedziałek - niedziela)
+    const now = new Date();
+    const currentDay = now.getDay();
+    const diff = now.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
 
-        const tbody = document.getElementById('rows');
-        
-        days.forEach((day, i) => {
-            const current = new Date(monday);
-            current.setDate(monday.getDate() + i);
-            const dateStr = current.toLocaleDateString('pl-PL');
+    document.getElementById('displayDate').innerText = `Tydzień: ${monday.toLocaleDateString()} - ${new Date(new Date(monday).setDate(monday.getDate()+6)).toLocaleDateString()}`;
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${day}</td>
-                <td>${dateStr}</td>
-                <td><input type="time" id="s${i}" oninput="calc(${i})"></td>
-                <td><input type="time" id="e${i}" oninput="calc(${i})"></td>
-                <td class="row-sum" id="res${i}">0.00</td>
-            `;
-            tbody.appendChild(tr);
-        });
+    // Generowanie wierszy
+    days.forEach((day, i) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${day}</strong></td>
+            <td>${d.toLocaleDateString('pl-PL')}</td>
+            <td><input type="time" id="s${i}" oninput="calc(${i})"></td>
+            <td><input type="time" id="e${i}" oninput="calc(${i})"></td>
+            <td id="r${i}" style="font-weight:bold;">0.00</td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    function updateName() {
+        const sel = document.getElementById('workerSelect').value;
+        const man = document.getElementById('manualName').value;
+        document.getElementById('displayWorker').innerText = man || sel || "Arkusz Czasu Pracy";
     }
 
     function calc(i) {
         const s = document.getElementById(`s${i}`).value;
         const e = document.getElementById(`e${i}`).value;
-        const out = document.getElementById(`res${i}`);
-
         if (s && e) {
             const start = new Date(`2000-01-01T${s}`);
             const end = new Date(`2000-01-01T${e}`);
-            let diff = (end - start) / (1000 * 60 * 60);
-            if (diff < 0) diff += 24; 
-            out.innerText = diff.toFixed(2);
+            let diffH = (end - start) / 3600000;
+            if (diffH < 0) diffH += 24;
+            document.getElementById(`r${i}`).innerText = diffH.toFixed(2);
         }
-        updateTotal();
-    }
-
-    function updateTotal() {
+        
         let total = 0;
-        for(let i=0; i<7; i++) {
-            total += parseFloat(document.getElementById(`res${i}`).innerText) || 0;
+        for(let j=0; j<7; j++) {
+            total += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
         }
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
-
-    init();
 </script>
 
 </body>
