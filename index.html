@@ -3,25 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godziny Pizza - Wybór co 30 min</title>
+    <title>Godziny Pizza - Szybki Wybór</title>
     <style>
         :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 900px; }
         .no-print { background: #fff8f2; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; }
         .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-        select { padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; }
+        select { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; cursor: pointer; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: var(--primary); color: white; padding: 12px; }
-        td { border: 1px solid #eee; padding: 10px; text-align: center; }
-        .total-row { background: #2c3e50; color: white; font-weight: bold; font-size: 1.2rem; }
+        td { border: 1px solid #eee; padding: 10px; text-align: center; position: relative; }
+        .total-row { background: #2c3e50; color: white; font-weight: bold; }
         .btn { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
-        #editSection { display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 15px; }
-        .worker-input { margin-bottom: 8px; width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #bbb; border-radius: 4px; }
-        .time-select { width: 100px; font-weight: bold; border-color: var(--primary); }
-        @media print { .no-print { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; } }
+        .btn-fast { background: #eee; border: 1px solid #bbb; padding: 5px 8px; font-size: 12px; border-radius: 4px; margin-left: 5px; cursor: pointer; }
+        .fast-menu { display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 5px; width: 150px; }
+        .fast-opt { display: block; width: 100%; text-align: left; padding: 8px; border: none; background: none; cursor: pointer; font-size: 13px; border-bottom: 1px solid #eee; }
+        .fast-opt:hover { background: #f0f0f0; }
+        @media print { .no-print, .btn-fast, .fast-menu { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
     </style>
 </head>
 <body>
@@ -30,15 +31,13 @@
     <div class="no-print">
         <div class="controls">
             <div>
-                <label>Wybierz osobę:</label><br>
+                <label>Osoba:</label><br>
                 <select id="workerSelect" onchange="updateUI()"></select>
             </div>
-            <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Zarządzaj listą</button>
-            <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
+            <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
+            <button class="btn btn-print" onclick="window.print()">🖨️ PDF</button>
         </div>
-
-        <div id="editSection">
-            <h4 style="margin:0 0 10px 0">Imiona (puste znikną):</h4>
+        <div id="editSection" style="display:none; margin-top:15px; border-top:1px solid #ddd; padding-top:10px;">
             <div id="inputContainer"></div>
             <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ</button>
         </div>
@@ -51,18 +50,12 @@
 
     <table>
         <thead>
-            <tr>
-                <th>Dzień</th>
-                <th>Data</th>
-                <th>Od (co 30m)</th>
-                <th>Do (co 30m)</th>
-                <th>Suma (h)</th>
-            </tr>
+            <tr><th>Dzień</th><th>Data</th><th>Od — Do</th><th>Suma (h)</th></tr>
         </thead>
         <tbody id="tableBody"></tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="4" style="text-align:right; padding-right:15px">SUMA:</td>
+                <td colspan="3" style="text-align:right; padding-right:15px">SUMA TYGODNIOWA:</td>
                 <td id="grandTotal">0.00</td>
             </tr>
         </tfoot>
@@ -71,29 +64,34 @@
 
 <script>
     const days = ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"];
+    const presets = [
+        {l: "10:00 - 18:00", s: "10:00", e: "18:00"},
+        {l: "12:00 - 20:00", s: "12:00", e: "20:00"},
+        {l: "14:00 - 22:00", s: "14:00", e: "22:00"},
+        {l: "Wolne", s: "", e: ""}
+    ];
+    
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
 
-    function generateTimeOptions() {
-        let options = '<option value="">--:--</option>';
+    function getTimeOptions() {
+        let htm = '<option value="">--:--</option>';
         for(let h=0; h<24; h++) {
             for(let m=0; m<60; m+=30) {
-                const hh = h < 10 ? '0'+h : h;
-                const mm = m === 0 ? '00' : m;
-                options += `<option value="${hh}:${mm}">${hh}:${mm}</option>`;
+                let hh = h<10?'0'+h:h, mm = m===0?'00':m;
+                htm += `<option value="${hh}:${mm}">${hh}:${mm}</option>`;
             }
         }
-        return options;
+        return htm;
     }
 
     function init() {
         const now = new Date();
         const mon = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)));
-        const sun = new Date(new Date(mon).setDate(mon.getDate() + 6));
-        document.getElementById('displayDates').innerText = `Tydzień: ${mon.toLocaleDateString()} - ${sun.toLocaleDateString()}`;
-
+        document.getElementById('displayDates').innerText = `Tydzień od ${mon.toLocaleDateString()}`;
+        
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
-        const timeOptions = generateTimeOptions();
+        const tOpts = getTimeOptions();
 
         days.forEach((d, i) => {
             const date = new Date(mon); date.setDate(mon.getDate() + i);
@@ -101,59 +99,62 @@
                 <tr>
                     <td><strong>${d}</strong></td>
                     <td>${date.toLocaleDateString()}</td>
-                    <td><select class="time-select" id="s${i}" onchange="calc(${i})">${timeOptions}</select></td>
-                    <td><select class="time-select" id="e${i}" onchange="calc(${i})">${timeOptions}</select></td>
+                    <td>
+                        <select id="s${i}" onchange="calc(${i})">${tOpts}</select>
+                        <select id="e${i}" onchange="calc(${i})">${tOpts}</select>
+                        <button class="btn-fast no-print" onclick="toggleFast(${i})">⚡</button>
+                        <div id="f${i}" class="fast-menu"></div>
+                    </td>
                     <td id="r${i}" style="font-weight:bold; color:var(--primary)">0.00</td>
                 </tr>`;
         });
-        renderWorkerList();
+        renderWorkers();
     }
 
-    function renderWorkerList() {
-        const select = document.getElementById('workerSelect');
-        const container = document.getElementById('inputContainer');
-        select.innerHTML = '<option value="">-- Wybierz osobę --</option>';
-        container.innerHTML = "";
+    function toggleFast(i) {
+        const m = document.getElementById(`f${i}`);
+        if(m.style.display === "block") { m.style.display="none"; return; }
+        m.innerHTML = presets.map(p => `<button class="fast-opt" onclick="setT(${i},'${p.s}','${p.e}')">${p.l}</button>`).join('');
+        m.style.display = "block";
+    }
+
+    function setT(i, s, e) {
+        document.getElementById(`s${i}`).value = s;
+        document.getElementById(`e${i}`).value = e;
+        document.getElementById(`f${i}`).style.display = "none";
+        calc(i);
+    }
+
+    function renderWorkers() {
+        const sel = document.getElementById('workerSelect'), con = document.getElementById('inputContainer');
+        sel.innerHTML = '<option value="">-- Wybierz --</option>'; con.innerHTML = "";
         for(let i=0; i<10; i++) {
-            const val = workers[i] || "";
-            if(val) select.innerHTML += `<option value="${val}">${val}</option>`;
-            container.innerHTML += `<input type="text" class="worker-input" id="winp${i}" value="${val}" placeholder="Imię pracownika ${i+1}">`;
+            const v = workers[i] || "";
+            if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
+            con.innerHTML += `<input type="text" style="width:100%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
         }
     }
 
-    function toggleEdit() {
-        const s = document.getElementById('editSection');
-        s.style.display = s.style.display === 'block' ? 'none' : 'block';
-    }
+    function toggleEdit() { const s = document.getElementById('editSection'); s.style.display = s.style.display==='block'?'none':'block'; }
 
     function saveWorkers() {
-        let newWorkers = [];
-        for(let i=0; i<10; i++) newWorkers[i] = document.getElementById(`winp${i}`).value.trim();
-        workers = newWorkers;
+        for(let i=0; i<10; i++) workers[i] = document.getElementById(`winp${i}`).value.trim();
         localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
-        renderWorkerList();
-        toggleEdit();
+        renderWorkers(); toggleEdit();
     }
 
-    function updateUI() {
-        document.getElementById('displayWorker').innerText = document.getElementById('workerSelect').value || "Godziny Pizza";
-    }
+    function updateUI() { document.getElementById('displayWorker').innerText = document.getElementById('workerSelect').value || "Godziny Pizza"; }
 
     function calc(i) {
         const s = document.getElementById(`s${i}`).value, e = document.getElementById(`e${i}`).value;
-        const res = document.getElementById(`r${i}`);
+        const out = document.getElementById(`r${i}`);
         if(s && e) {
-            const start = new Date(`2000-01-01T${s}`);
-            const end = new Date(`2000-01-01T${e}`);
-            let diff = (end - start) / 3600000;
-            if(diff < 0) diff += 24;
-            res.innerText = diff.toFixed(2);
-        } else {
-            res.innerText = "0.00";
-        }
-        let total = 0;
-        for(let j=0; j<7; j++) total += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
-        document.getElementById('grandTotal').innerText = total.toFixed(2);
+            let d = (new Date(`2000-01-01T${e}`) - new Date(`2000-01-01T${s}`)) / 3600000;
+            if(d < 0) d += 24;
+            out.innerText = d.toFixed(2);
+        } else { out.innerText = "0.00"; }
+        let t = 0; for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
+        document.getElementById('grandTotal').innerText = t.toFixed(2);
     }
     init();
 </script>
