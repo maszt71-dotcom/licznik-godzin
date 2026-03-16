@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Godziny Pizza - Podsumowanie</title>
+    <title>Godziny Pizza</title>
     <style>
         :root { --primary: #e67e22; --bg: #f4f7f6; --text: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -16,21 +16,20 @@
         .summary-hours { font-size: 1.3rem; font-weight: 900; color: #2c3e50; }
 
         .controls { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; margin-top: 15px; }
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        select, input[type="date"] { padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white; cursor: pointer; font-weight: bold; }
+        select, .date-input-table { padding: 8px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; background: white; cursor: pointer; font-family: inherit; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { background: var(--primary); color: white; padding: 12px; text-transform: uppercase; font-size: 0.9rem; }
         td { border: 1px solid #eee; padding: 10px; text-align: center; }
-        .total-row { background: #2c3e50; color: white; font-weight: bold; font-size: 1.1rem; }
+        .total-row { background: #2c3e50; color: white; font-weight: bold; }
         
-        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-print { background: #27ae60; color: white; }
         .btn-edit { background: #3498db; color: white; }
-        .btn-wolne { background: #fff0f0; border: 1px solid #ffcccc; color: #c0392b; padding: 5px 12px; font-size: 12px; border-radius: 4px; margin-left: 10px; cursor: pointer; font-weight: bold; }
+        .btn-wolne { background: #fff0f0; border: 1px solid #ffcccc; color: #c0392b; padding: 5px 10px; font-size: 12px; border-radius: 4px; margin-left: 10px; cursor: pointer; font-weight: bold; }
         
         #editSection { display: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px; }
-        @media print { .no-print, .btn-wolne, .summary-box { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select, input { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; } }
+        @media print { .no-print, .btn-wolne, .summary-box { display: none !important; } .card { box-shadow: none; border: none; width: 100%; } select, input { border: none; -webkit-appearance: none; appearance: none; color: black; font-weight: bold; padding: 0; background: none; width: auto; } }
     </style>
 </head>
 <body>
@@ -41,27 +40,23 @@
         <div id="summaryDisplay" class="summary-box"></div>
 
         <div class="controls">
-            <div class="control-group">
-                <label style="font-weight:bold;">Pracownik:</label>
+            <div>
+                <label style="font-weight:bold;">Pracownik:</label><br>
                 <select id="workerSelect" onchange="changeWorker()"></select>
             </div>
-            <div class="control-group">
-                <label style="font-weight:bold;">Poniedziałek (data):</label>
-                <input type="date" id="mondayPicker" onchange="updateCalendarDates()">
-            </div>
             <button class="btn btn-edit" onclick="toggleEdit()">⚙️ Lista osób</button>
-            <button class="btn btn-print" onclick="window.print()">🖨️ PDF</button>
+            <button class="btn btn-print" onclick="window.print()">🖨️ Drukuj PDF</button>
         </div>
 
         <div id="editSection">
             <div id="inputContainer"></div>
-            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ IMIONA</button>
+            <button class="btn" style="background:#2ecc71; color:white; margin-top:10px; width:100%" onclick="saveWorkers()">ZAPISZ LISTĘ</button>
         </div>
     </div>
 
     <div style="text-align:center">
         <h1 id="displayWorker" style="margin-bottom:5px;">Godziny Pizza</h1>
-        <p id="displayDatesRange" style="color: #666; font-weight: bold; margin-top:0; font-size: 1.2rem;"></p>
+        <p id="weekRangeDisplay" style="color: #666; font-weight: bold; margin-bottom: 10px;"></p>
     </div>
 
     <table>
@@ -71,7 +66,7 @@
         <tbody id="tableBody"></tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="3" style="text-align:right; padding-right:15px">SUMA (TEN ARKUSZ):</td>
+                <td colspan="3" style="text-align:right; padding-right:15px">SUMA:</td>
                 <td id="grandTotal">0.00</td>
             </tr>
         </tfoot>
@@ -83,12 +78,13 @@
     let workers = JSON.parse(localStorage.getItem('godzinyPizzaWorkers')) || [];
     let allHours = JSON.parse(localStorage.getItem('godzinyPizzaAllSums')) || {};
 
-    // Funkcja znajdująca najbliższy poniedziałek (dzisiejszy lub przeszły)
-    function getMonday(d) {
-        d = new Date(d);
-        var day = d.getDay(),
-            diff = d.getDate() - day + (day == 0 ? -6 : 1);
-        return new Date(d.setDate(diff));
+    // Funkcja pomocnicza: ustawia datę na poniedziałek bieżącego tygodnia
+    function getInitialMonday() {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+        const mon = new Date(d.setDate(diff));
+        return mon.toISOString().split('T')[0];
     }
 
     function getTimeOptions() {
@@ -103,19 +99,20 @@
     }
 
     function init() {
-        // Ustaw domyślną datę na dzisiejszy poniedziałek
-        const startMon = getMonday(new Date());
-        document.getElementById('mondayPicker').value = startMon.toISOString().split('T')[0];
-        
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = "";
         const tOpts = getTimeOptions();
+        const defaultMonday = getInitialMonday();
 
         daysArr.forEach((d, i) => {
+            let dateCell = (i === 0) 
+                ? `<input type="date" id="mondayDate" class="date-input-table" value="${defaultMonday}" onchange="updateDates()">`
+                : `<span id="date-${i}"></span>`;
+
             tbody.innerHTML += `
                 <tr>
                     <td><strong>${d}</strong></td>
-                    <td id="date-${i}">--.--.----</td>
+                    <td>${dateCell}</td>
                     <td>
                         <select id="s${i}" onchange="calc(${i})">${tOpts}</select>
                         <select id="e${i}" onchange="calc(${i})">${tOpts}</select>
@@ -124,25 +121,25 @@
                     <td id="r${i}" style="font-weight:bold; color:var(--primary)">0.00</td>
                 </tr>`;
         });
-        
-        updateCalendarDates();
+        updateDates();
         renderWorkers();
         updateSummary();
     }
 
-    function updateCalendarDates() {
-        const selectedDate = new Date(document.getElementById('mondayPicker').value);
-        const mon = getMonday(selectedDate);
+    function updateDates() {
+        const monVal = document.getElementById('mondayDate').value;
+        const mon = new Date(monVal);
         
-        // Wyświetl zakres dat u góry
+        // Aktualizacja podtytułu zakresu
         const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-        document.getElementById('displayDatesRange').innerText = `${mon.toLocaleDateString()} - ${sun.toLocaleDateString()}`;
+        document.getElementById('weekRangeDisplay').innerText = `Tydzień: ${mon.toLocaleDateString()} - ${sun.toLocaleDateString()}`;
 
-        // Zaktualizuj daty w tabeli narastająco
         daysArr.forEach((_, i) => {
-            const current = new Date(mon);
-            current.setDate(mon.getDate() + i);
-            document.getElementById(`date-${i}`).innerText = current.toLocaleDateString();
+            if (i > 0) {
+                const cur = new Date(mon);
+                cur.setDate(mon.getDate() + i);
+                document.getElementById(`date-${i}`).innerText = cur.toLocaleDateString();
+            }
         });
     }
 
@@ -168,7 +165,7 @@
         for(let i=0; i<10; i++) {
             let v = workers[i] || "";
             if(v) sel.innerHTML += `<option value="${v}">${v}</option>`;
-            con.innerHTML += `<input type="text" style="width:96%; margin-bottom:6px; padding:10px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
+            con.innerHTML += `<input type="text" style="width:95%; margin-bottom:5px; padding:8px;" id="winp${i}" value="${v}" placeholder="Pracownik ${i+1}">`;
         }
     }
 
@@ -186,13 +183,8 @@
     function toggleEdit() { const s = document.getElementById('editSection'); s.style.display = s.style.display==='block'?'none':'block'; }
 
     function saveWorkers() {
-        let newWorkers = [];
-        for(let i=0; i<10; i++) {
-            let val = document.getElementById(`winp${i}`).value.trim();
-            if(val) newWorkers.push(val);
-        }
-        workers = newWorkers;
-        localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
+        let nw = []; for(let i=0; i<10; i++) { let v = document.getElementById(`winp${i}`).value.trim(); if(v) nw.push(v); }
+        workers = nw; localStorage.setItem('godzinyPizzaWorkers', JSON.stringify(workers));
         renderWorkers(); toggleEdit(); updateSummary();
     }
 
@@ -209,12 +201,8 @@
         let t = 0; for(let j=0; j<7; j++) t += parseFloat(document.getElementById(`r${j}`).innerText) || 0;
         const finalSum = t.toFixed(2);
         document.getElementById('grandTotal').innerText = finalSum;
-        const currentWorker = document.getElementById('workerSelect').value;
-        if(currentWorker) {
-            allHours[currentWorker] = finalSum;
-            localStorage.setItem('godzinyPizzaAllSums', JSON.stringify(allHours));
-            updateSummary();
-        }
+        const cw = document.getElementById('workerSelect').value;
+        if(cw) { allHours[cw] = finalSum; localStorage.setItem('godzinyPizzaAllSums', JSON.stringify(allHours)); updateSummary(); }
     }
     init();
 </script>
